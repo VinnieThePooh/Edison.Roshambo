@@ -1,0 +1,92 @@
+﻿aside {
+    width: 25%;
+    height: 200px;
+}
+
+.asideScores {
+    float: left;
+}
+
+.field {
+    float: left;
+    width: 50%;
+    height: 250px;
+    border-left: 1px solid red;
+    border-right: 1px solid red;
+    padding: 5px;
+    position: relative;
+}
+
+.asideTimer {
+    float: right;
+}
+
+
+.roundResult {
+    width: 60%;
+    float: left;
+}
+
+
+.clear {
+    clear: both;
+}
+
+.mk5-font {
+    font-family: mk5;
+}
+
+#announcementHeader {
+    height: 20px;
+    margin-top: 0;
+}
+
+
+@font-face  {
+    font-family: mk5;
+    src: url(Fonts/mk5.ttf);  
+}
+
+
+.subfooter > div {
+    float: left;
+    height: 50px;
+}
+
+.gamePlatform {
+    height: 80%;
+}
+
+.gamePlatform div, .gamePlatform aside {
+    box-sizing: border-box;
+}
+
+
+#tableTimer p {
+    font-size: 10px;
+}
+
+.modal-body {
+    padding-top: 0;
+}
+
+.time p {
+    font-size: 16px;
+}
+
+
+aside table {
+    margin: 5px auto;
+}
+
+.field div {
+    position: absolute;
+}
+
+div.yourShape {
+    left: 50px;
+}
+
+div.opponentShape {
+    right: 50px;
+}

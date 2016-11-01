@@ -1,0 +1,124 @@
+﻿* {
+    box-sizing: border-box;
+}
+
+body {
+    padding-top: 50px;
+    padding-bottom: 20px;
+}
+
+/* Set padding to keep content from hitting the edges */
+.body-content {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+/* Override the default bootstrap behavior where horizontal description lists 
+   will truncate terms that are too long to fit in the left column 
+*/
+.dl-horizontal dt {
+    white-space: normal;
+}
+
+/* Set width on the form input elements since they're 100% wide by default */
+input,
+select,
+textarea {
+    max-width: 280px;
+}
+
+
+footer.footer {
+    position: absolute;
+    padding: 20px 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 60px;
+    border-top: 1px solid #cccccc;
+}
+
+.wrapper {
+    top: 51px;
+    bottom: 60px;
+    width: 95%;
+    margin: 0 auto;
+}
+
+.sidepaddings {
+    padding-left: 200px;
+    padding-right: 200px;
+}
+
+
+.games.container {
+    margin-left: 0;
+}
+
+.games .info {
+    height: 40px;
+    padding: 5px;
+    padding-left: 14px;
+    font-size: 12px;
+    margin-bottom: 15px;
+}
+
+#tableUsers td:nth-last-child() {
+    border-right: 1px solid #cccccc;
+}
+
+ hr:first-of-type {
+    margin-bottom: 0;
+}
+
+ .buttons {
+     height: 40px;
+ }
+
+
+.modal-dialog {
+    height: auto;
+    position: absolute;
+    top: 114px;
+    left: 45%;
+    margin-top: -25px;
+    margin-left: -200px;
+    padding: 20px;
+}
+
+.modal-sm {
+   width: 330px;
+}
+
+
+body .modal-admin {
+    width: 685px;
+}
+
+
+body .modal-playing {
+    width: 85%;
+    height: 85%;
+    margin: 0 auto;
+}
+
+.modal-wrapper {
+    height: 100%;
+}
+
+.custom-modal {
+    top: 5%;
+    bottom: 5%;
+}
+
+#lobbyError {
+    margin-top: 7px;
+}
+
+.container h4 {
+    display: block;
+}
+
+.no-margin {
+    margin: 0;
+}

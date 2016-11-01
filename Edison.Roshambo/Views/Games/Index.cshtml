@@ -1,0 +1,264 @@
+﻿@model Edison.Roshambo.Domain.Models.CustomUser
+@using Edison.Roshambo.Domain.Infrastructure
+@using Edison.Roshambo.Web.Infrastructure
+@using Microsoft.AspNet.Identity
+@{
+    ViewBag.Title = "Games main page";
+}
+@section scripts
+{
+    @Scripts.Render("~/bundles/signalr")
+    <script type="text/javascript" src="~/signalr/hubs"></script>
+    <script type="text/javascript" src="~/Scripts/clientmodel.js"></script>
+    <script type="text/javascript">
+        $(function() {
+
+            var resources = {
+                LobbyStatePlaying: '@LobbyStateNames.Playing',
+                LobbyStateAwaitingForPlayers: '@LobbyStateNames.AwaitingToPlayers',
+                LobbyStateReadyToStart: '@LobbyStateNames.ReadyToStart',
+                LobbyStateSummarizing: '@LobbyStateNames.Summarizing',
+                LobbyStateBlocked: '@LobbyStateNames.Blocked',
+                NextRoundWillStartIn: '@GameWorkflowMessages.NextRoundWillStartIn',
+                YourBlockingExpiresIn: '@GameWorkflowMessages.YourBlockingExpiresIn'
+            };
+
+            window.Resources = resources;
+            console.log("Window.load");
+            window.UserName = '@HttpContext.Current.User.Identity.Name';
+            window.storage = new LobbiesStorage();
+
+            var hub = $.connection.hub;
+            window.gamesHub = $.connection.gamesHub;
+            window.GameManager = new GameManager(window.gamesHub);
+
+            var manager = window.GameManager;
+            manager.userReloadedPage = true;
+            manager.userBlocked = '@Model.IsBlocked' === 'True' ? true : false;
+            manager.blockingTime = getDate('@Model.BlockingTime');
+            //console.log(manager.blockingTime);
+            manager.currentGame.currentUserName = window.UserName;
+            
+            initValidation("btnConfirmCreation", storage);
+            initLobbyJoin("btnConfirmJoin");
+            initHandlers();
+            initGameStartup();
+            initPlayingWorkflow();
+            initBlocking();
+            defineClientCallbacks(gamesHub);
+
+            hub.start().done(function() {
+                console.log("Hub: connection started");
+
+                gamesHub.server.getOnlineUsers().done(function(users) {
+                        var table = $("#tableUsers");
+                        users.forEach(function(user) {
+                            addUserToTable(table, user);
+                        });
+
+                    })
+                    .fail(function(error) {
+                        var par = $("#messageUsers");
+                        setTempMessage(par, "Could not load users list. Try to reload page later.");
+                        console.log(error.stack);
+                    });
+
+                window.gamesHub.server.getOnlineLobbies().done(function(lobbies) {
+                    var table = $("#tableLobbies");
+                    lobbies.forEach(function(lobbie) {
+                        addLobbyToTable(table, lobbie);
+                    });
+
+                }).fail(function(error) {
+                    var par = $("#messageLobbies");
+                    setTempMessage(par, "Could not load lobbies list. Try to reload page later.");
+                    console.log(error.stack);
+                });
+
+            });
+        });
+    </script>
+}
+<div class="container games">
+    <div class="info bg-success">
+        <p id="blockingTimer" class="text-danger"></p>
+        <p id="messageUsers" class="text-info"></p>
+        <p id="messageLobbies" class="text-info"></p>
+    </div>
+    <div class="buttons info">
+        <button id="btnCreateLobby"data-toggle="modal" data-target="#modalWindow" class="btn btn-default" type="button">Create lobby</button>
+        <button id="btnJoinToLobby" data-toggle="modal" data-target="#joinLobbyModal" class="btn btn-default" type="button">Join selected lobby</button>
+        <button id="btnLeaveJoinedLobby" data-toggle="modal" data-target="#leaveLobbyModal" class="btn btn-default" type="button">Leave joined lobby</button>
+        <button id="btnPlay" class="btn btn-default" type="button">Start playing</button>
+    </div>
+    <div class="container">
+        <div class="col-md-2 users">
+            <h4>Users:</h4>
+            <table class="table table-hover" id="tableUsers" data-name="@HttpContext.Current.User.Identity.Name">
+                <thead>
+                <tr>
+                    <th>
+                        User name
+                    </th>
+                </tr>
+                </thead>
+                <tbody></tbody>
+                <tfoot></tfoot>
+            </table>
+        </div>
+        <div class="col-md-6 lobbies">
+            <h4>Lobbies:</h4>
+            <table class="table" id="tableLobbies">
+                <thead>
+                <tr>
+                    <th>LobbyName</th>
+                    <th>Lobby Owner</th>
+                    <th>Lobby Status</th>
+                    <th>Opponent</th>
+                </tr>
+                </thead>
+                <tbody></tbody>
+                <tfoot></tfoot>
+            </table>
+        </div>
+    </div>
+    <div class="col-md-9"></div>
+</div>
+
+<div class="modal fade" id="modalWindow" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-admin">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
+                </button>
+                <h4 class="modal-title" id="myModalLabel">Please, provide name for new lobby</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group has-feedback">
+                    <label for="lobbyName">Name:</label>
+                    <input type="text" class="form-control" id="lobbyName">
+                    <span class="glyphicon form-control-feedback"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <span id="lobbyError"  class="text-er pull-left"></span>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="submit" id="btnConfirmCreation" class="btn btn-primary">Create lobby</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="joinLobbyModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel2" aria-hidden="true">
+    <div class="modal-dialog  modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
+                </button>
+                <h4 class="modal-title" id="myModalLabel2">Join confirmation</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group no-margin has-feedback">
+                    <p class="text-center bg-primary">Are you sure u want to join this lobby?</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <span id="join Error" class="text-er pull-left"></span>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="submit" id="btnConfirmJoin" class="btn btn-primary">Join lobby</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade custom-modal" id="playingModal" data-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="myModalLabel3" aria-hidden="true">
+    <div class="modal-wrapper">
+        <div class="modal-content modal-playing">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
+                </button>
+                <h4 class="modal-title text-center" id="myModalLabel3">Play the game</h4>
+            </div>
+            <div class="modal-body">
+                <header id="announcementHeader" class="text-center">
+                    <h3 class="text-center mk5-font"></h3>
+                </header>
+                <div class="gamePlatform">
+                    <!-- scores-->
+                    <aside class="asideScores">
+                        <h4 class="text-center">Scores</h4>
+                        <table id="tableScores">
+                            <thead>
+                            <tr>
+                                <th class="owner"></th>
+                                <th>-</th>
+                                <th class="opponent"></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>
+                                    <img id="fPlayer"/>
+                                </td>
+                                <td></td>
+                                <td><img id="sPlayer"/></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </aside>
+                    <!-- gameTimer -->
+                    <aside class="asideTimer">
+                        <h4 class="text-center">Round Timer</h4>
+                        <table id="tableTimer">
+                            <tbody>
+                            <tr>
+                                <td class="roundNumber"></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <p class="text-info"></p>
+                                </td>
+                            </tr>
+                            <tr class="time">
+                                <td>
+                                    <p class="text-center"></p>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </aside>
+                    <div class="field">
+                        <!-- images chosen will be displayed here -->
+                        <div class="yourShape">
+                            <p class="text-center">Your shape</p>
+                            <img id="imgYourShape"/>
+                        </div>
+                        <div class="opponentShape">
+                            <p class="text-center">Opponent shape</p>
+                            <img id="imgOpponentShape"/>
+                        </div>
+                    </div>
+                    <p class="clear"></p>
+                    <div class="subfooter">
+                        <div class="tiparea"></div>
+                        <div class="imagesList"></div>
+                    </div>
+                    <footer>
+                        <div class="buttons">
+                            <button type="button" id="btnLeaveLobby" class="btn btn-default">Leave lobby</button>
+                            <button type="button" class="btn btn-default">View history</button>
+                        </div>
+                        <p id="gameMessage"></p>
+                        <div class="imagesList"></div>
+                    </footer>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+

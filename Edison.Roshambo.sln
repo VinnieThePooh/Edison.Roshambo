@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edison.Roshambo.Web", "Edison.Roshambo\Edison.Roshambo.Web.csproj", "{BC1A564D-1AE4-45D8-85FF-472A203CA21C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edison.Roshambo.Domain", "Edison.Roshambo.Domain\Edison.Roshambo.Domain.csproj", "{E0A8C0F3-072F-49E9-8AC6-19ED0A547CD8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BC1A564D-1AE4-45D8-85FF-472A203CA21C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BC1A564D-1AE4-45D8-85FF-472A203CA21C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BC1A564D-1AE4-45D8-85FF-472A203CA21C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BC1A564D-1AE4-45D8-85FF-472A203CA21C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E0A8C0F3-072F-49E9-8AC6-19ED0A547CD8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E0A8C0F3-072F-49E9-8AC6-19ED0A547CD8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E0A8C0F3-072F-49E9-8AC6-19ED0A547CD8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E0A8C0F3-072F-49E9-8AC6-19ED0A547CD8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

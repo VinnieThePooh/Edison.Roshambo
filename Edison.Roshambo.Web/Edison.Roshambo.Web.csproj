@@ -175,6 +175,7 @@
     <Compile Include="Startup.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include=".gitattributes" />
     <Content Include="App_Data\aspnet-Edison.Roshambo.mdf" />
     <Content Include="App_Data\aspnet-Edison.Roshambo_log.ldf">
       <DependentUpon>aspnet-Edison.Roshambo.mdf</DependentUpon>

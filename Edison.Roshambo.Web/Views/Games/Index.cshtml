@@ -46,6 +46,7 @@
             initPlayingWorkflow();
             initBlocking();
             defineClientCallbacks(gamesHub);
+            initImagesHandlers();
 
             hub.start().done(function() {
                 console.log("Hub: connection started");
@@ -242,8 +243,29 @@
                     </div>
                     <p class="clear"></p>
                     <div class="subfooter">
-                        <div class="tiparea"></div>
-                        <div class="imagesList"></div>
+                            <div class="tiparea"></div>
+                            <div class="imagesList">
+                                <div class="thumbnail">
+                                    <div class="caption hidden"></div>
+                                    <img id="img1" src="~\Content/Images/rock.png" alt="Rock" title="Rock"/>
+                                </div>
+                                <div class="thumbnail">
+                                    <div class="caption hidden"></div>
+                                    <img id="img2" src="~\Content/Images/paper.png" alt="Paper" title="Paper"/>
+                                </div>
+                                <div class="thumbnail">
+                                    <div class="caption hidden"></div>
+                                    <img id="img3" src="~\Content/Images/scissors.png" alt="Scissors" title="Scissors"/>
+                                </div>
+                                <div class="thumbnail">
+                                    <div class="caption hidden"></div>
+                                    <img id="img4" src="~\Content/Images/lizard.png" alt="Lizard" title="Lizard"/>
+                                </div>
+                                <div class="thumbnail">
+                                    <div class="caption hidden"></div>
+                                    <img id="img5" src="~\Content/Images/spock.png" alt="Spock" title="Spock" />
+                                </div>
+                            </div>
                     </div>
                     <footer>
                         <div class="buttons">

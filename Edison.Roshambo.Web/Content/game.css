@@ -48,7 +48,7 @@
 }
 
 
-.subfooter > div {
+.subfooter .tiparea {
     float: left;
     height: 50px;
 }
@@ -90,3 +90,39 @@ div.yourShape {
 div.opponentShape {
     right: 50px;
 }
+
+.container {
+    margin: 5px auto;
+}
+
+.imagesList {
+    margin: 5px auto;
+    width: 858px;
+    padding-left: 30px;
+}
+
+.thumbnail {
+    display: inline-block;
+    position: relative;
+    overflow: hidden;
+}
+
+.caption {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    padding: 2%;
+    z-index: 2;
+    background:rgba(95, 95, 95, 0.75);
+}
+
+.hidden {
+    display: none;
+}
+
+.visible {
+    display: block;
+}
+

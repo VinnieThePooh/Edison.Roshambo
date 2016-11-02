@@ -255,6 +255,135 @@ function beginCountDownToUnblock(span) {
     }, 1000);
 }
 
+function initImagesHandlers() {
+
+    var img1Clicks = 0, img2Clicks = 0, img3Clicks = 0, img4Clicks = 0, img5Clicks = 0;
+    var t1, t2, t3, t4, t5;
+    var delay = 300;
+    Array.from($(".imagesList .thumbnail")).forEach(function (th) {
+    
+        $(th).on("click", function () {
+            var current = $(this);
+            var currentImageId = $(this).find("img").attr("id");
+            switch(currentImageId) {
+                case "img1":
+                    img1Clicks++;
+                    if (img1Clicks === 1) {
+                        t1 = setTimeout(function() {
+                            img1Clicks = 0;
+                            var caption = current.find(".caption").toggleClass("hidden").toggleClass("visible");
+                            if (caption.hasClass("visible")) {
+                               var others = $(".imagesList img").filter(function(index) {
+                                    return $(this).attr("id") !== currentImageId;
+                               });
+
+                                [].slice.call(others).forEach(function(image) {
+                                    $(image).parent().find(".caption").removeClass("visible").addClass("hidden");
+                                });
+                            }
+                        }, delay);
+                    } else {
+                        clearTimeout(t1);
+                        img1Clicks = 0;
+                    }
+                    break;
+                case "img2":
+                    img2Clicks++;
+                    if (img2Clicks === 1) {
+                        t2 = setTimeout(function () {
+                            img2Clicks = 0;
+                            var caption = current.find(".caption").toggleClass("hidden").toggleClass("visible");
+                            if (caption.hasClass("visible")) {
+                                var others = $(".imagesList img").filter(function (index) {
+                                    return $(this).attr("id") !== currentImageId;
+                                });
+
+                                [].slice.call(others).forEach(function (image) {
+                                    $(image).parent().find(".caption").removeClass("visible").addClass("hidden");
+                                });
+                            }
+                        }, delay);
+                    } else {
+                        clearTimeout(t2);
+                        img2Clicks = 0;
+                    }
+                    break;
+                case "img3":
+                    img3Clicks++;
+                    if (img3Clicks === 1) {
+                        t3 = setTimeout(function () {
+                            img3Clicks = 0;
+                            var caption = current.find(".caption").toggleClass("hidden").toggleClass("visible");
+                            if (caption.hasClass("visible")) {
+                                var others = $(".imagesList img").filter(function (index) {
+                                    return $(this).attr("id") !== currentImageId;
+                                });
+
+                                [].slice.call(others).forEach(function (image) {
+                                    $(image).parent().find(".caption").removeClass("visible").addClass("hidden");
+                                });
+                            }
+                        }, delay);
+                    } else {
+                        clearTimeout(t3);
+                        img3Clicks = 0;
+                    }
+                    break;
+                case "img4":
+                    img4Clicks++;
+                    if (img4Clicks === 1) {
+                        t4 = setTimeout(function () {
+                            var caption = current.find(".caption").toggleClass("hidden").toggleClass("visible");
+                            if (caption.hasClass("visible")) {
+                                var others = $(".imagesList img").filter(function (index) {
+                                    return $(this).attr("id") !== currentImageId;
+                                });
+
+                                [].slice.call(others).forEach(function (image) {
+                                    $(image).parent().find(".caption").removeClass("visible").addClass("hidden");
+                                });
+                            }
+                        }, delay);
+                    } else {
+                        clearTimeout(t4);
+                        img4Clicks = 0;
+                    }
+                    break;
+                case "img5":
+                    img5Clicks++;
+                    if (img5Clicks === 1) {
+                        t5 = setTimeout(function () {
+                            img5Clicks = 0;
+                            var caption = current.find(".caption").toggleClass("hidden").toggleClass("visible");
+                            if (caption.hasClass("visible")) {
+                                var others = $(".imagesList img").filter(function (index) {
+                                    return $(this).attr("id") !== currentImageId;
+                                });
+
+                                [].slice.call(others).forEach(function (image) {
+                                    $(image).parent().find(".caption").removeClass("visible").addClass("hidden");
+                                });
+                            }
+                        }, delay);
+                    } else {
+                        clearTimeout(t5);
+                        img5Clicks = 0;
+                    }
+                    break;
+            }
+            
+        }).on("dblclick", function(e) {
+            e.preventDefault();
+        });
+
+
+//        $(img).on("dblclick", function() {
+//            var current = $(this);
+//            console.log("Was clicked: " + current.attr("src"));
+//        });
+    });
+}
+
 function initHandlers() {
     $("#btnJoinToLobby").prop("disabled", true);
     $(" #btnLeaveJoinedLobby").prop("disabled", true);

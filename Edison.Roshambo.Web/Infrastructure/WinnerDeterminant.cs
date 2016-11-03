@@ -22,7 +22,7 @@ namespace Edison.Roshambo.Web.Infrastructure
                 if (second.ShapeName.Equals(ShapeNames.Scissors)) return null;
                 if (second.ShapeName.Equals(ShapeNames.Lizard)) return first.UserName;
                 if (second.ShapeName.Equals(ShapeNames.Paper)) return first.UserName;
-                if (second.ShapeName.Equals(ShapeNames.Stone)) return second.UserName;
+                if (second.ShapeName.Equals(ShapeNames.Rock)) return second.UserName;
                 if (second.ShapeName.Equals(ShapeNames.Spock)) return second.UserName;
             }
 
@@ -31,7 +31,7 @@ namespace Edison.Roshambo.Web.Infrastructure
                 if (second.ShapeName.Equals(ShapeNames.Lizard)) return null;
                 if (second.ShapeName.Equals(ShapeNames.Scissors)) return second.UserName;
                 if (second.ShapeName.Equals(ShapeNames.Paper)) return first.UserName;
-                if (second.ShapeName.Equals(ShapeNames.Stone)) return second.UserName;
+                if (second.ShapeName.Equals(ShapeNames.Rock)) return second.UserName;
                 if (second.ShapeName.Equals(ShapeNames.Spock)) return first.UserName;
             }
 
@@ -40,7 +40,7 @@ namespace Edison.Roshambo.Web.Infrastructure
                 if (second.ShapeName.Equals(ShapeNames.Paper)) return null;
                 if (second.ShapeName.Equals(ShapeNames.Scissors)) return second.UserName;
                 if (second.ShapeName.Equals(ShapeNames.Lizard)) return second.UserName;
-                if (second.ShapeName.Equals(ShapeNames.Stone)) return first.UserName;
+                if (second.ShapeName.Equals(ShapeNames.Rock)) return first.UserName;
                 if (second.ShapeName.Equals(ShapeNames.Spock)) return first.UserName;
             }
 
@@ -50,14 +50,14 @@ namespace Edison.Roshambo.Web.Infrastructure
                 if (second.ShapeName.Equals(ShapeNames.Spock)) return null;
                 if (second.ShapeName.Equals(ShapeNames.Scissors)) return first.UserName;
                 if (second.ShapeName.Equals(ShapeNames.Lizard)) return second.UserName;
-                if (second.ShapeName.Equals(ShapeNames.Stone)) return first.UserName;
+                if (second.ShapeName.Equals(ShapeNames.Rock)) return first.UserName;
                 if (second.ShapeName.Equals(ShapeNames.Paper)) return second.UserName;
             }
 
 
-            if (first.ShapeName.Equals(ShapeNames.Stone))
+            if (first.ShapeName.Equals(ShapeNames.Rock))
             {
-                if (second.ShapeName.Equals(ShapeNames.Stone)) return null;
+                if (second.ShapeName.Equals(ShapeNames.Rock)) return null;
                 if (second.ShapeName.Equals(ShapeNames.Scissors)) return first.UserName;
                 if (second.ShapeName.Equals(ShapeNames.Lizard)) return first.UserName;
                 if (second.ShapeName.Equals(ShapeNames.Spock)) return second.UserName;

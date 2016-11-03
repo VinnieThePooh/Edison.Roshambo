@@ -93,6 +93,18 @@
         $("div.opponentShape").css("display", "none");
     }
 
+
+    function resetImagesState() {
+        Array.from($(".imagesList .thumbnail")).forEach(function(th) {
+            $(th).find(".caption").addClass("hidden").removeClass("visible");
+        });
+    }
+
+    function resetChosenImages() {
+        $("#imgYourShape").attr("src", "/Content/Images/question-mark.png");
+        $("#imgOpponentShape").attr("src", "/Content/Images/question-mark.png");
+    }
+
     function showShapes() {
         var div = $("div.yourShape").first();
         div.css("display", "block");
@@ -125,6 +137,9 @@
     function startBeforeGameCountDown(roundNumber) {
         hideTimer();
         hideShapes();
+        resetImagesState();
+        resetChosenImages();
+
         var header = $("#announcementHeader h3");
         var message = window.Resources.NextRoundWillStartIn.replace("*", roundNumber);
         var timeout = current.beforeRoundsTimeout;
@@ -319,6 +334,7 @@ function initHandlers() {
 function initGameStartup() {
     $("#btnPlay").click(function() {
         var manager = window.GameManager;
+        manager.isUserLobbyOwner = true;
         var game = manager.currentGame;
 
         //todo: just hide button start game if user has no lobby

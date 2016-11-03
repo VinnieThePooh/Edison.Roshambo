@@ -54,9 +54,17 @@ function defineClientCallbacks(gamesHub) {
     client.lobbyHasBeenUnblockedAll = onLobbyHasBeenUnblockedAll;
     client.shapeWasSent = onShapeWasSent;
     client.roundEnded = onRoundEnded;
+    client.correctLobbyOwning = onCorrectLobbyOwning;
 }
 
-function onRoundEnded(data) {
+
+function onCorrectLobbyOwning() {
+    var manager = window.GameManager;
+    manager.isUserLobbyOwner = false;
+}
+
+function onRoundEnded(data)
+{
 
     var manager = window.GameManager;
     var ownerShapeId = data.OwnerShapeId;
@@ -65,18 +73,30 @@ function onRoundEnded(data) {
 
     var mapper = manager.ImagesIdToShapesIdMapper;
     var imgSourceUrl;
-
-    for (var prop in mapper) {
-        if (mapper[prop] === opponentShapeId) {
-            imgSourceUrl = $("#" + prop).attr("src");
-            $("#imgOpponentShape").attr("src", imgSourceUrl);
-            break;
+    var prop;
+    if (manager.isUserLobbyOwner) {
+        for (prop in mapper) {
+            if (mapper[prop] === opponentShapeId) {
+                imgSourceUrl = $("#" + prop).attr("src");
+                $("#imgOpponentShape").attr("src", imgSourceUrl);
+                break;
+            }
         }
     }
-
-    // define winner
-
+    else
+    {
+        for (prop in mapper) {
+            if (mapper[prop] === ownerShapeId) {
+                imgSourceUrl = $("#" + prop).attr("src");
+                $("#imgOpponentShape").attr("src", imgSourceUrl);
+                break;
+            }
+        }
+    } 
 }
+
+    
+
 
 
 function onShapeWasSent(gameId, roundNumber, shapeId, error) {

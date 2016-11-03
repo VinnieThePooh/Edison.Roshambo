@@ -8,7 +8,7 @@ namespace Edison.Roshambo.Domain.Infrastructure
 {
    public static class ShapeNames
     {
-        public const string Stone = "Stone";
+        public const string Rock = "Rock";
         public const string Scissors = "Scissors";
         public const string Paper = "Paper";
         public const string Lizard = "Lizard";

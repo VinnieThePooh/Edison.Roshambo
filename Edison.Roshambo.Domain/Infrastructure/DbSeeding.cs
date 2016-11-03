@@ -32,7 +32,7 @@ namespace Edison.Roshambo.Domain.Infrastructure
         {
             context.Set<GameShape>().AddOrUpdate(
               new[]{
-                   new GameShape() { ShapeName = ShapeNames.Stone},
+                   new GameShape() { ShapeName = ShapeNames.Rock},
                     new GameShape() { ShapeName = ShapeNames.Scissors},
                     new GameShape() { ShapeName = ShapeNames.Paper},
                      new GameShape() { ShapeName = ShapeNames.Lizard},

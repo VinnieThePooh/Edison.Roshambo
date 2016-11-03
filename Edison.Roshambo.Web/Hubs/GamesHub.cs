@@ -19,7 +19,7 @@ namespace Edison.Roshambo.Web.Hubs
     [Authorize]
     public class GamesHub : Hub
     {
-        static readonly object Locker = new object();
+        public static readonly object Locker = new object();
 
         public Task AddUser(UserProjection projection)
         {
@@ -329,22 +329,21 @@ namespace Edison.Roshambo.Web.Hubs
         {
             var context = HttpContext.Current.GetOwinContext().Get<RoshamboContext>();
             var game = context.Games.Single(g => g.GameId.Equals(gameId));
-            var notAdded = false;
+            var notAdded = await Task.FromResult(false);
             lock (Locker)
             {
                 var round = game.Rounds.SingleOrDefault(r => r.IdGame.Equals(gameId) && r.RoundNumber.Equals(roundNumber));
                 if (round == null)
                 {
-                    notAdded = true;
                     round = new GameRound()
                     {
                         RoundNumber = roundNumber
                     };
                     game.Rounds.Add(round);
+                    context.SaveChanges();
                 }
             }
-            if (notAdded)
-            await context.SaveChangesAsync();
+            
         }
 
 
@@ -424,8 +423,8 @@ namespace Edison.Roshambo.Web.Hubs
                 // adding owner to current group cause of membership resets after page reloading
                 await Groups.Add(Context.ConnectionId, lobby.LobbyName);
                 // передавать надо больше информации,+ gameStatus
-                var data =
-                    new {addedGame.GameId, LobbyOwnerName = userName, OpponentName = opponentName, lobby.LobbyName};
+                var data = new {addedGame.GameId, LobbyOwnerName = userName, OpponentName = opponentName, lobby.LobbyName};
+                Clients.OthersInGroup(lobby.LobbyName).correctLobbyOwning();
                 Clients.Group(lobby.LobbyName).gameStarted(data);
             }
             catch (Exception exc)

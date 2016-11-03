@@ -518,16 +518,5 @@ namespace Edison.Roshambo.Web.Hubs
                     new {Result = false, Message = string.Format(HubResponseMessages.Error, e.Message)});
             }
         }
-
-        // записать в бд ход противника
-        // если отправляется уже второй ход противника, то вернуть обоим результаты раунда
-        public async Task DoRoundAction(int shapeId, int roundId)
-        {
-        }
-
-        // надо ли?
-        public async Task SummarizeGamesResults(int gameId)
-        {
-        }
     }
 }

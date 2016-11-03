@@ -62,6 +62,7 @@
     <Compile Include="DataAccess\RoshamboContext.cs" />
     <Compile Include="Infrastructure\DbSeeding.cs" />
     <Compile Include="Infrastructure\LobbyStateNames.cs" />
+    <Compile Include="Infrastructure\ShapeNames.cs" />
     <Compile Include="Models\Competitor.cs" />
     <Compile Include="Models\CustomUser.cs" />
     <Compile Include="Models\Game.cs" />

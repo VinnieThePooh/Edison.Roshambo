@@ -52,11 +52,65 @@ function defineClientCallbacks(gamesHub) {
     client.lobbyHasBeenBlocked = onlobbyHasBeenBlocked;
     client.lobbyHasBeenBlockedAll = onLobbyHasBeenBlockedAll;
     client.lobbyHasBeenUnblockedAll = onLobbyHasBeenUnblockedAll;
+    client.shapeWasSent = onShapeWasSent;
+    client.roundEnded = onRoundEnded;
 }
+
+function onRoundEnded(data) {
+
+    var manager = window.GameManager;
+    var ownerShapeId = data.OwnerShapeId;
+    var opponentShapeId = data.OpponentShapeId;
+    var winner = data.WinnerUsername;
+
+    var mapper = manager.ImagesIdToShapesIdMapper;
+    var imgSourceUrl;
+
+    for (var prop in mapper) {
+        if (mapper[prop] === opponentShapeId) {
+            imgSourceUrl = $("#" + prop).attr("src");
+            $("#imgOpponentShape").attr("src", imgSourceUrl);
+            break;
+        }
+    }
+
+    // define winner
+
+}
+
+
+function onShapeWasSent(gameId, roundNumber, shapeId, error) {
+
+    if (error) {
+        console.log(error);
+        return;
+    }
+
+    var manager = window.GameManager;
+    var game = manager.currentGame;
+    game.rounds[roundNumber - 1].shapeWasSent = true;
+    
+    // set image here
+
+    var mapper = manager.ImagesIdToShapesIdMapper;
+    var imgSourceUrl;
+
+    for (var prop in mapper) {
+        if (mapper[prop] === shapeId) {
+            imgSourceUrl = $("#" + prop).attr("src");
+            $("#imgYourShape").attr("src",imgSourceUrl);
+            break;
+        }
+    }
+
+}
+
+
 
 function onLobbyHasBeenUnblockedAll(data) {
     
 }
+
 
 
 function onLobbyHasBeenBlockedAll(data) {

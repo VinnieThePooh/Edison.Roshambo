@@ -31,13 +31,13 @@ namespace Edison.Roshambo.Domain.Infrastructure
         private static void SeedGameShapes(RoshamboContext context)
         {
             context.Set<GameShape>().AddOrUpdate(
-              new[]
-              {
-                   new GameShape() { ShapeName = "Rock"},
-                    new GameShape() { ShapeName = "Paper"},
-                    new GameShape() { ShapeName = "Scissors"},
-                     new GameShape() { ShapeName = "Lizard"},
-                     new GameShape() { ShapeName = "Spock"}
+              new[]{
+                   new GameShape() { ShapeName = ShapeNames.Stone},
+                    new GameShape() { ShapeName = ShapeNames.Scissors},
+                    new GameShape() { ShapeName = ShapeNames.Paper},
+                     new GameShape() { ShapeName = ShapeNames.Lizard},
+                     new GameShape() { ShapeName = ShapeNames.Spock},
+                     new GameShape() { ShapeName = ShapeNames.Undefined}
               });
 
         }

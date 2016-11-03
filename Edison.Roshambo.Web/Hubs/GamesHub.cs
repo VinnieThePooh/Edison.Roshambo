@@ -19,6 +19,8 @@ namespace Edison.Roshambo.Web.Hubs
     [Authorize]
     public class GamesHub : Hub
     {
+        static readonly object Locker = new object();
+
         public Task AddUser(UserProjection projection)
         {
             return Task.Run(() =>
@@ -47,6 +49,70 @@ namespace Edison.Roshambo.Web.Hubs
             });
         }
 
+
+        // todo: refactor
+        // this logic must be encapsulated in separated entity
+        public async Task SendShape(int gameId, int roundNumber, int shapeId)
+        {
+            try
+            {
+                var currentUserName = HttpContext.Current.User.Identity.Name;
+                var context = HttpContext.Current.GetOwinContext().Get<RoshamboContext>();
+                var currentShape = context.Set<GameShape>().Single(s => s.ShapeId.Equals(shapeId));
+                GameShape ownerShape = null, oppShape = null;
+
+
+                var game = context.Games.First(g => g.GameId.Equals(gameId));
+                var lobbyOwnerName = game.LobbyOwner.UserName;
+                // problem place - how to add round only once?
+                var round = game.Rounds.Single(gr => gr.IdGame.Equals(gameId) && gr.RoundNumber.Equals(roundNumber));
+
+                int oppShapeId = 0, ownerShapeId = 0;
+                var lobbyName = game.Lobby.LobbyName;
+
+               
+                
+
+                if (currentUserName.Equals(lobbyOwnerName))
+                {
+                    round.LobbyOwnerShapeName = currentShape.ShapeName;
+                    ownerShape = currentShape;
+                }
+                else
+                {
+                    round.OpponentShapeName = currentShape.ShapeName;
+                    oppShape = currentShape;
+                }
+                await context.SaveChangesAsync();
+
+                Clients.Caller.shapeWasSent(gameId, roundNumber, shapeId, null);
+                
+                // round winner can be resolved now
+                if (round.OpponentShapeName != null && round.LobbyOwnerShapeName != null)
+                {
+                    if (oppShape == null)
+                        oppShape = context.Set<GameShape>().Single(s => s.ShapeName.Equals(round.OpponentShapeName));
+                    if (ownerShape == null)
+                        ownerShape = context.Set<GameShape>().Single(s => s.ShapeName.Equals(round.LobbyOwnerShapeName));
+
+                    PlayerMetadata owner = new PlayerMetadata(lobbyOwnerName, ownerShape.ShapeName);
+                    PlayerMetadata opponent = new PlayerMetadata(game.Lobby.Players.First().User.UserName, round.OpponentShapeName);
+
+                    // define round results, winner
+                    var winnerUsername = WinnerDeterminant.DetermineWinner(owner, opponent);
+                    
+                    // define info about tips using and send to client
+                    var data = new { OwnerShapeId = ownerShape.ShapeId, OpponentShapeId = oppShape.ShapeId, WinnerUsername = winnerUsername};
+                    Clients.Group(lobbyName).roundEnded(data);
+                }
+            }
+            catch (Exception e)
+            {
+                Clients.Caller.shapeWasSent(null, null, null, e.ToString());
+            }
+        }
+
+
         public async Task<IEnumerable<UserProjection>> GetOnlineUsers()
         {
             var userName = Context.User.Identity.Name;
@@ -67,7 +133,7 @@ namespace Edison.Roshambo.Web.Hubs
                         {
                             LobbyName = x.LobbyName,
                             LobbyOwner = x.LobbyOwner.UserName,
-                            LobbyState = x.LobbyState.Name, 
+                            LobbyState = x.LobbyState.Name,
                             LobbyId = x.LobbyId,
                             OpponentName = x.Players.Any() ? x.Players.First().User.UserName : null
                         }).ToArray();
@@ -106,26 +172,29 @@ namespace Edison.Roshambo.Web.Hubs
 
             // notification for joiner
             var data = new
-                {
-                    LobbyName = lobbyName,
-                    LobbyOwnerName = lobbyOwner.UserName,
-                    OpponentName = lobbyOwner.UserName,
-                    CurrentUserName = userName,
-                    Message = HubResponseMessages.YouSuccessfullyJoinedLobby
-                };
+            {
+                LobbyName = lobbyName,
+                LobbyOwnerName = lobbyOwner.UserName,
+                OpponentName = lobbyOwner.UserName,
+                LobbyId = lobbyId,
+                CurrentUserName = userName,
+                Message = HubResponseMessages.YouSuccessfullyJoinedLobby
+            };
 
-            
+
             Clients.Caller.lobbyJoined(data);
 
             // notification for lobby owner
-            var dataToOwner =  new {
+            var dataToOwner = new
+            {
                 Message = string.Format(HubResponseMessages.UserJoinedYourLobby, Context.User.Identity.Name),
                 LobbyId = lobbyId,
                 LobbyName = lobbyName,
                 OpponentName = userName,
-                CurrentUserName = lobbyOwner.UserName};
+                CurrentUserName = lobbyOwner.UserName
+            };
 
-           
+
             Clients.Client(lobbyOwner.ConnectionId).lobbyWasJoined(dataToOwner);
 
             // update all other clients
@@ -134,8 +203,8 @@ namespace Edison.Roshambo.Web.Hubs
                 LobbyId = lobbyId,
                 OpponentName = userName
             };
-            
-            Clients.AllExcept(new [] {lobbyOwner.ConnectionId, opConnectionId}).lobbyWasJoinedAll(dataToOthers);
+
+            Clients.AllExcept(lobbyOwner.ConnectionId, opConnectionId).lobbyWasJoinedAll(dataToOthers);
         }
 
         //todo: test it
@@ -148,7 +217,7 @@ namespace Edison.Roshambo.Web.Hubs
                 var context = HttpContext.Current.GetOwinContext().Get<RoshamboContext>();
                 var userName = HttpContext.Current.User.Identity.Name;
                 var user = context.Users.First(u => u.UserName.Equals(userName));
-                var lobby =context.Lobbies.First(l => l.LobbyName.Equals(lobbyName));
+                var lobby = context.Lobbies.First(l => l.LobbyName.Equals(lobbyName));
 
                 var opponent = lobby.Players.FirstOrDefault();
                 // leave lobby  button already was clicked
@@ -156,7 +225,7 @@ namespace Edison.Roshambo.Web.Hubs
                     return;
 
                 var criticalTime = lobby.LobbyState.Name.Equals(LobbyStateNames.Playing);
-            
+
                 if (criticalTime)
                 {
                     user.IsBlocked = true;
@@ -167,13 +236,15 @@ namespace Edison.Roshambo.Web.Hubs
 
                 opponent.User.Competitor = null;
 
-                Game game = context.Games.First(g => g.IdLobbyOwner.Equals(lobby.LobbyOwner.Id) && string.IsNullOrEmpty(g.WinnerUserName));
-                
+                var game =
+                    context.Games.First(
+                        g => g.IdLobbyOwner.Equals(lobby.LobbyOwner.Id) && string.IsNullOrEmpty(g.WinnerUserName));
+
                 lobby.Players.Remove(opponent);
                 context.SaveChanges();
-                
+
                 if (opponent.IdUser.Equals(user.Id))
-                {   
+                {
                     if (criticalTime)
                     {
                         game.WinnerUserName = lobby.LobbyOwner.UserName;
@@ -184,7 +255,7 @@ namespace Edison.Roshambo.Web.Hubs
                         var data = HubResponseMessages.UserHaveBeenBlockedForAWhile;
                         var time = ConfigurationManager.AppSettings[AppSettingsKeys.UserBlockingTime];
                         message = string.Format(data, time);
-                        
+
                         // if user has lobby - block it too
                         var opLobby = context.Lobbies.FirstOrDefault(l => l.LobbyOwner.Id.Equals(user.Id));
                         if (opLobby != null)
@@ -194,7 +265,9 @@ namespace Edison.Roshambo.Web.Hubs
                         // send message about locking
                         Clients.Client(user.ConnectionId).userHasBeenBlocked(new {Message = message});
                     }
-                    else Clients.Group(lobbyName).addLobbyMessage(string.Format(HubResponseMessages.LobbyChallengerLeftLobby,userName));
+                    else
+                        Clients.Group(lobbyName)
+                            .addLobbyMessage(string.Format(HubResponseMessages.LobbyChallengerLeftLobby, userName));
                     SetLobbyState(context, LobbyStateNames.AwaitingToPlayers, lobbyName);
                 }
                 else
@@ -215,7 +288,7 @@ namespace Edison.Roshambo.Web.Hubs
 
                         //message to lobby owner about lobby blocking
                         var data = new {Message = message, LobbyName = lobbyName};
-                        Clients.Client(user.ConnectionId).userHasBeenBlocked(new { Message = message });
+                        Clients.Client(user.ConnectionId).userHasBeenBlocked(new {Message = message});
                         //Clients.Client(user.ConnectionId).lobbyHasBeenBlocked(data);
                     }
                     else
@@ -229,17 +302,17 @@ namespace Edison.Roshambo.Web.Hubs
             }
             catch (Exception e)
             {
-                
             }
         }
-         
+
 
         // not  tested
         public async Task RemoveLobby(string lobbyName)
         {
             var userName = HttpContext.Current.User.Identity.Name;
             var context = HttpContext.Current.GetOwinContext().Get<RoshamboContext>();
-            var user = context.Users.FirstOrDefault(u => u.UserName.Equals(userName) && u.OwnLobby.LobbyName.Equals(lobbyName));
+            var user =
+                context.Users.FirstOrDefault(u => u.UserName.Equals(userName) && u.OwnLobby.LobbyName.Equals(lobbyName));
 
             if (user != null)
             {
@@ -250,10 +323,28 @@ namespace Edison.Roshambo.Web.Hubs
         }
 
 
-        public async Task BeginRound(int gameId, int lobbyName, int roundNumber)
+        // possible this method can be reduced later
+        // this one just adds one record to collections of rounds
+        public async Task StartRound(int gameId, int roundNumber)
         {
-            
-
+            var context = HttpContext.Current.GetOwinContext().Get<RoshamboContext>();
+            var game = context.Games.Single(g => g.GameId.Equals(gameId));
+            var notAdded = false;
+            lock (Locker)
+            {
+                var round = game.Rounds.SingleOrDefault(r => r.IdGame.Equals(gameId) && r.RoundNumber.Equals(roundNumber));
+                if (round == null)
+                {
+                    notAdded = true;
+                    round = new GameRound()
+                    {
+                        RoundNumber = roundNumber
+                    };
+                    game.Rounds.Add(round);
+                }
+            }
+            if (notAdded)
+            await context.SaveChangesAsync();
         }
 
 
@@ -291,7 +382,8 @@ namespace Edison.Roshambo.Web.Hubs
                     lobbyId = lobby.LobbyId;
                     lobby.IdLobbyState = lobbyState.LobbyStateId;
                     context.SaveChanges();
-                    Clients.All.lobbyStateChanged(new {lobby.LobbyId, LobbyName = lobbyName, LobbyState = lobbyState.Name});
+                    Clients.All.lobbyStateChanged(
+                        new {lobby.LobbyId, LobbyName = lobbyName, LobbyState = lobbyState.Name});
                 }
                 return lobbyId;
             }
@@ -301,17 +393,21 @@ namespace Edison.Roshambo.Web.Hubs
             }
         }
 
-       //todo: выделить в репозиторий/GameManager что-ли?
+        //todo: выделить в репозиторий/GameManager что-ли?
         public async Task StartGame(string opponentName)
         {
             var userName = HttpContext.Current.User.Identity.Name;
             var context = HttpContext.Current.GetOwinContext().Get<RoshamboContext>();
-            var game = context.Set<Game>().FirstOrDefault(g => g.LobbyOwner.UserName.Equals(userName) && string.IsNullOrEmpty(g.WinnerUserName));
+            var game =
+                context.Set<Game>()
+                    .FirstOrDefault(
+                        g => g.LobbyOwner.UserName.Equals(userName) && string.IsNullOrEmpty(g.WinnerUserName));
             var lobby = context.Lobbies.FirstOrDefault(l => l.LobbyOwner.UserName.Equals(userName));
 
             if (game != null || lobby == null) return;
 
             var user = context.Users.FirstOrDefault(u => u.UserName.Equals(userName));
+
 
             try
             {
@@ -328,7 +424,8 @@ namespace Edison.Roshambo.Web.Hubs
                 // adding owner to current group cause of membership resets after page reloading
                 await Groups.Add(Context.ConnectionId, lobby.LobbyName);
                 // передавать надо больше информации,+ gameStatus
-                var data = new { addedGame.GameId, LobbyOwnerName = userName, OpponentName = opponentName, lobby.LobbyName};
+                var data =
+                    new {addedGame.GameId, LobbyOwnerName = userName, OpponentName = opponentName, lobby.LobbyName};
                 Clients.Group(lobby.LobbyName).gameStarted(data);
             }
             catch (Exception exc)
@@ -337,7 +434,7 @@ namespace Edison.Roshambo.Web.Hubs
             }
         }
 
-        public async Task BlockUser(string  userName)
+        public async Task BlockUser(string userName)
         {
             var context = HttpContext.Current.GetOwinContext().Get<RoshamboContext>();
             var user = context.Users.FirstOrDefault(x => x.UserName.Equals(userName));
@@ -386,7 +483,10 @@ namespace Edison.Roshambo.Web.Hubs
             try
             {
                 var user = context.Users.Single(u => u.UserName.Equals(userName));
-                var lobby = await context.Lobbies.FirstOrDefaultAsync(l => l.LobbyId.Equals(user.Id) || l.LobbyName.Equals(lobbyName));
+                var lobby =
+                    await
+                        context.Lobbies.FirstOrDefaultAsync(
+                            l => l.LobbyId.Equals(user.Id) || l.LobbyName.Equals(lobbyName));
 
                 if (lobby == null)
                 {
@@ -418,19 +518,16 @@ namespace Edison.Roshambo.Web.Hubs
                     new {Result = false, Message = string.Format(HubResponseMessages.Error, e.Message)});
             }
         }
-        
+
         // записать в бд ход противника
         // если отправляется уже второй ход противника, то вернуть обоим результаты раунда
         public async Task DoRoundAction(int shapeId, int roundId)
         {
-               
         }
 
         // надо ли?
         public async Task SummarizeGamesResults(int gameId)
         {
-            
-
         }
     }
 }

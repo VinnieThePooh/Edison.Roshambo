@@ -9,6 +9,8 @@ namespace Edison.Roshambo.Domain.Models
             IdGame = idGame;
             RoundNumber = roundNumber;
         }
+
+        public GameRound() { }
         
         public int GameRoundId { get; set; }
         public int IdGame { get; set; }
@@ -17,8 +19,8 @@ namespace Edison.Roshambo.Domain.Models
         public int? IdRoundWinner { get; set; }
         public int RoundNumber { get; set; }
         public virtual Game ParentGame { get; set; }
-        public string LobbyOwnerGameShapeName { get; set; }
-        public string OpponentGameShapeName { get; set; }
+        public string LobbyOwnerShapeName { get; set; }
+        public string OpponentShapeName { get; set; }
 
         [ForeignKey("IdRoundWinner")]
         public  virtual CustomUser RoundWinner { get; set; }

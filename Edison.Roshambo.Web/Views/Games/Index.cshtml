@@ -23,6 +23,7 @@
                 YourBlockingExpiresIn: '@GameWorkflowMessages.YourBlockingExpiresIn'
             };
 
+
             window.Resources = resources;
             console.log("Window.load");
             window.UserName = '@HttpContext.Current.User.Identity.Name';
@@ -234,11 +235,11 @@
                         <!-- images chosen will be displayed here -->
                         <div class="yourShape">
                             <p class="text-center">Your shape</p>
-                            <img id="imgYourShape"/>
+                            <img id="imgYourShape" src="~/Content/Images/question-mark.png"/>
                         </div>
                         <div class="opponentShape">
                             <p class="text-center">Opponent shape</p>
-                            <img id="imgOpponentShape"/>
+                            <img id="imgOpponentShape" src="~/Content/Images/question-mark.png"/>
                         </div>
                     </div>
                     <p class="clear"></p>

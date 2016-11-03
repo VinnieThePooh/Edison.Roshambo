@@ -167,6 +167,8 @@
     <Compile Include="Infrastructure\GameWorkflowMessages.cs" />
     <Compile Include="Infrastructure\HubResponseMessages.cs" />
     <Compile Include="Infrastructure\LobbyStateMapper.cs" />
+    <Compile Include="Infrastructure\PlayerMetadata.cs" />
+    <Compile Include="Infrastructure\WinnerDeterminant.cs" />
     <Compile Include="Models\LobbyProjection.cs" />
     <Compile Include="Models\UserProjection.cs" />
     <Compile Include="ViewModels\AccountViewModels.cs" />
@@ -185,6 +187,7 @@
     <Content Include="Content\Images\forapp.jpg" />
     <Content Include="Content\Images\lizard.png" />
     <Content Include="Content\Images\paper.png" />
+    <Content Include="Content\Images\question-mark.png" />
     <Content Include="Content\Images\rock-paper-scissors-lizard-spock_53538a0489676_w1500.jpg" />
     <Content Include="Content\Images\rock.png" />
     <Content Include="Content\Images\scissors.png" />
@@ -201,7 +204,6 @@
     <Content Include="Content\Fonts\mk5.ttf" />
     <None Include="Scripts\jquery-3.1.0.intellisense.js" />
     <Content Include="Scripts\clientmodel.js" />
-    <Content Include="Scripts\game.js" />
     <Content Include="Scripts\jquery-3.1.0.js" />
     <Content Include="Scripts\jquery-3.1.0.min.js" />
     <Content Include="Scripts\jquery-3.1.0.slim.js" />

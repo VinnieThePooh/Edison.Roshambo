@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.Entity;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Web;
@@ -56,6 +57,8 @@ namespace Edison.Roshambo.Web.Hubs
         {
             try
             {
+                
+                
                 var currentUserName = HttpContext.Current.User.Identity.Name;
                 var context = HttpContext.Current.GetOwinContext().Get<RoshamboContext>();
                 var currentShape = context.Set<GameShape>().Single(s => s.ShapeId.Equals(shapeId));

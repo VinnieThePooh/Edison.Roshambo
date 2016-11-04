@@ -29,6 +29,7 @@
             window.Resources = resources;
             console.log("Window.load");
             window.UserName = '@HttpContext.Current.User.Identity.Name';
+
             window.storage = new LobbiesStorage();
 
             var hub = $.connection.hub;
@@ -228,7 +229,7 @@
                             </tr>
                             <tr class="time">
                                 <td>
-                                    <p class="text-center"></p>
+                                    <h4 class="text-center"></h4>
                                 </td>
                             </tr>
                             </tbody>

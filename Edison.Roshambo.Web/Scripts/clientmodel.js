@@ -18,13 +18,24 @@
     var isPlayingState = false;
     var opponentScores = 0;
     var ownerScores = 0;
-    this.ImagesIdToShapesIdMapper = {
+    this.imagesIdToShapesIdMapper = {
         img1: 1,
         img2: 2,
         img3: 3,
         img4: 4,
         img5: 5,
         "undefined": 6
+    };
+
+    this.shapesIdToNameMapper = {
+       map: {
+           1: "Rock",
+           2: "Paper",
+           3: "Scissors",
+           4: "Lizard",
+           5: "Spock", 
+           6: "Undefined"
+       }
     };
 
 
@@ -139,6 +150,11 @@
         tinfo.css("display", "none");
     }
 
+
+    function hideAnnouncement() {
+        $("#announcementHeader").find("h3").text(null);
+    }
+
     function showTimer() {
         var timer = $("#tableTimer tr.time p").first();
         timer.text(null);
@@ -164,6 +180,7 @@
         isPlayingState = false;
         hideTimer();
         hideShapes();
+        hideAnnouncement();
         resetImagesState();
         resetChosenImages();
 
@@ -193,7 +210,7 @@
         
         var header = $("#announcementHeader h3");
         $(".asideTimer p.text-info").text("Time left to make your choice:");
-        var timeInfo = $("#tableTimer tr.time p").first();
+        var timeInfo = $("#tableTimer tr.time h4").first();
         currentManager.currentRoundNumber = roundNumber;
         var round = currentManager.currentGame.rounds[roundNumber - 1];
 
@@ -220,9 +237,6 @@
                     var hub = currentManager.gamesHub;
                     hub.server.sendShape(currentManager.currentGame.gameId, currentManager.currentRoundNumber, UNDEFINED_SHAPE_ID);
                 }
-                return;
-                // end round here
-                // if had no choice - send lose result
             }
             duration--;
             counter++;
@@ -262,19 +276,29 @@
 
 
     function onRoundEnded(data) {
-        var manager = window.GameManager;
         var ownerShapeId = data.OwnerShapeId;
         var opponentShapeId = data.OpponentShapeId;
         var winner = data.WinnerUsername;
 
         var header = $("#announcementHeader h3");
 
-        var mapper = manager.ImagesIdToShapesIdMapper;
+        var mapper = currentManager.shapesIdToNameMapper;
+        var imagesMapper = currentManager.imagesIdToShapesIdMapper;
+
+        // set opponent shape here
+        // for history
+        var round = currentManager.currentGame.rounds[currentManager.currentRoundNumber - 1];
+
+        if (currentManager.isUserLobbyOwner) {
+            round.opponentShape = mapper.map[opponentShapeId];
+        } else round.opponentShape = mapper.map[ownerShapeId];
+
+
         var imgSourceUrl;
         var prop;
-        if (manager.isUserLobbyOwner) {
-            for (prop in mapper) {
-                if (mapper[prop] === opponentShapeId) {
+        if (currentManager.isUserLobbyOwner) {
+            for (prop in imagesMapper) {
+                if (imagesMapper[prop] === opponentShapeId) {
                     imgSourceUrl = $("#" + prop).attr("src");
                     $("#imgOpponentShape").attr("src", imgSourceUrl);
                     break;
@@ -282,8 +306,8 @@
             }
         }
         else {
-            for (prop in mapper) {
-                if (mapper[prop] === ownerShapeId) {
+            for (prop in imagesMapper) {
+                if (imagesMapper[prop] === ownerShapeId) {
                     imgSourceUrl = $("#" + prop).attr("src");
                     $("#imgOpponentShape").attr("src", imgSourceUrl);
                     break;
@@ -291,23 +315,21 @@
             }
         }
 
-        // for next round
-        var callback = function() {
-            startPlayingIteration(currentManager.currentRoundNumber++);
-        }
-
+        
         if (winner) {
-            setTempMessage(header, window.Resources.RoundGotAWinner.replace("*", winner), callback);
+            setTempMessage(header, window.Resources.RoundGotAWinner.replace("*", winner));
             updateScores(winner);
             setScoresTable();
         }
         else {
-            setTempMessage(header, window.Resources.DrawnRound, callback);
+            setTempMessage(header, window.Resources.DrawnRound);
         }
 
         clearInterval(playingTimer);
         hideTimer();
-        
+        setTimeout(function () {
+            currentManager.startPlayingIteration( ++currentManager.currentRoundNumber);
+        }, 3000);
     }
 
     function updateScores(winner) {
@@ -334,18 +356,23 @@
             console.log(error);
             return;
         }
-
+        
         var manager = window.GameManager;
         var game = manager.currentGame;
-        game.rounds[roundNumber - 1].shapeWasSent = true;
+        var round = game.rounds[roundNumber - 1];
+
+        var mapper = manager.shapesIdToNameMapper;
+        var imagesMapper = manager.imagesIdToShapesIdMapper;
+        round.shapeWasSent = true;
+        round.currentUserShape = mapper.map[shapeId];
 
         // set image here
 
-        var mapper = manager.ImagesIdToShapesIdMapper;
+        
         var imgSourceUrl;
 
-        for (var prop in mapper) {
-            if (mapper[prop] === shapeId) {
+        for (var prop in imagesMapper) {
+            if (imagesMapper[prop] === shapeId) {
                 imgSourceUrl = $("#" + prop).attr("src");
                 $("#imgYourShape").attr("src", imgSourceUrl);
                 break;
@@ -714,7 +741,7 @@ function initImagesHandlers() {
                 });
 
                 var rnumber = manager.currentRoundNumber;
-                var shapeId = manager.ImagesIdToShapesIdMapper[currentImageId];
+                var shapeId = manager.imagesIdToShapesIdMapper[currentImageId];
                 manager.sendShape(currentGame.gameId, rnumber, shapeId);
             }
         });
@@ -787,7 +814,8 @@ function addLobbyToTable(table, lobby) {
 }
 
 
-function setTempMessage(paragraph, message, interval, callback) {
+function setTempMessage(paragraph, message, interval)//, callback)
+{
     interval = interval || 3;
     paragraph.text(message);
     var counter = 0;
@@ -796,13 +824,11 @@ function setTempMessage(paragraph, message, interval, callback) {
         if (counter++ == interval) {
             paragraph.text(null);
             clearInterval(timer);
-            if (callback)
-                callback();
+//            if (callback)
+//                callback();
         };
     }, 1000);
 }
-
-
 
 
 

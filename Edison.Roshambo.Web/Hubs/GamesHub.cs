@@ -52,7 +52,7 @@ namespace Edison.Roshambo.Web.Hubs
 
         // todo: refactor
         // this logic must be encapsulated in separated entity
-        public async Task SendShape(int gameId, int roundNumber, int shapeId)
+        public async Task SendShape(int gameId, int roundNumber, int shapeId) 
         {
             try
             {

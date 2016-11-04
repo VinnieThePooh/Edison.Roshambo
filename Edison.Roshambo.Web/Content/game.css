@@ -107,6 +107,8 @@ div.opponentShape {
     overflow: hidden;
 }
 
+
+
 .caption {
     position: absolute;
     top: 0;
@@ -124,5 +126,14 @@ div.opponentShape {
 
 .visible {
     display: block;
+}
+
+
+th.yourScoresLegend {
+    padding-right: 10px;
+}
+
+th.opponentScoresLegend {
+    padding-left: 10px;
 }
 

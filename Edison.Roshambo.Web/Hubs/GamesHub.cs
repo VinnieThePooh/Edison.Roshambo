@@ -69,7 +69,6 @@ namespace Edison.Roshambo.Web.Hubs
 
                 int oppShapeId = 0, ownerShapeId = 0;
                 var lobbyName = game.Lobby.LobbyName;
-
                
                 
 
@@ -100,7 +99,8 @@ namespace Edison.Roshambo.Web.Hubs
 
                     // define round results, winner
                     var winnerUsername = WinnerDeterminant.DetermineWinner(owner, opponent);
-                    
+                    round.IdRoundWinner = GetIdRoundWinner(winnerUsername, context);
+                    await context.SaveChangesAsync();
                     // define info about tips using and send to client
                     var data = new { OwnerShapeId = ownerShape.ShapeId, OpponentShapeId = oppShape.ShapeId, WinnerUsername = winnerUsername};
                     Clients.Group(lobbyName).roundEnded(data);
@@ -110,6 +110,15 @@ namespace Edison.Roshambo.Web.Hubs
             {
                 Clients.Caller.shapeWasSent(null, null, null, e.ToString());
             }
+        }
+
+
+
+        private int? GetIdRoundWinner(string userName, RoshamboContext context)
+        {
+            if (string.IsNullOrEmpty(userName)) return null;
+            var user = context.Users.Single(u => u.UserName.Equals(userName));
+            return user.Id;
         }
 
 

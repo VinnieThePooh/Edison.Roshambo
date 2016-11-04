@@ -20,7 +20,9 @@
                 LobbyStateSummarizing: '@LobbyStateNames.Summarizing',
                 LobbyStateBlocked: '@LobbyStateNames.Blocked',
                 NextRoundWillStartIn: '@GameWorkflowMessages.NextRoundWillStartIn',
-                YourBlockingExpiresIn: '@GameWorkflowMessages.YourBlockingExpiresIn'
+                YourBlockingExpiresIn: '@GameWorkflowMessages.YourBlockingExpiresIn',
+                DrawnRound: '@GameWorkflowMessages.DrawnRound',
+                RoundGotAWinner: '@GameWorkflowMessages.RoundGotAWinner'
             };
 
 
@@ -46,7 +48,6 @@
             initGameStartup();
             initPlayingWorkflow();
             initBlocking();
-            defineClientCallbacks(gamesHub);
             initImagesHandlers();
 
             hub.start().done(function() {
@@ -194,18 +195,20 @@
                         <table id="tableScores">
                             <thead>
                             <tr>
-                                <th class="owner"></th>
+                                <th class="yourScoresLegend"></th>
                                 <th>-</th>
-                                <th class="opponent"></th>
+                                <th class="opponentScoresLegend"></th>
                             </tr>
                             </thead>
                             <tbody>
                             <tr>
                                 <td>
-                                    <img id="fPlayer"/>
+                                    <h4 id="yourScores" class="text-center"></h4>
                                 </td>
-                                <td></td>
-                                <td><img id="sPlayer"/></td>
+                                <td><h4>:</h4></td>
+                                <td>
+                                <h4 id="oppScores" class="text-center"></h4>
+                                </td>
                             </tr>
                             </tbody>
                         </table>

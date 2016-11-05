@@ -6,6 +6,6 @@
         public const string ReadyToStart = "Ready to start";
         public const string Playing = "Playing";
         public const string Blocked = "Blocked";
-        public const string Summarizing = "Summarizing";
+        public const string Summarizing = "Summarizing results";
     }
 }

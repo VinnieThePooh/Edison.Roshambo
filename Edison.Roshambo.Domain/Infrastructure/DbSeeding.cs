@@ -27,14 +27,14 @@ namespace Edison.Roshambo.Domain.Infrastructure
         }
 
 
-
+        // don't change order of shapes here!
         private static void SeedGameShapes(RoshamboContext context)
         {
             context.Set<GameShape>().AddOrUpdate(
               new[]{
                    new GameShape() { ShapeName = ShapeNames.Rock},
-                    new GameShape() { ShapeName = ShapeNames.Scissors},
                     new GameShape() { ShapeName = ShapeNames.Paper},
+                    new GameShape() { ShapeName = ShapeNames.Scissors},
                      new GameShape() { ShapeName = ShapeNames.Lizard},
                      new GameShape() { ShapeName = ShapeNames.Spock},
                      new GameShape() { ShapeName = ShapeNames.Undefined}

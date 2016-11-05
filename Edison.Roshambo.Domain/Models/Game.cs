@@ -19,6 +19,8 @@ namespace Edison.Roshambo.Domain.Models
         public virtual Lobby Lobby { get; set; }
         public string WinnerUserName { get; set; }
         public virtual CustomUser LobbyOwner { get; set; }
+        public int LobbyOwnerScores { get; set; }
+        public int OpponentScores { get; set; }
         public virtual ICollection<GameRound> Rounds { get; set; }
     }
 }

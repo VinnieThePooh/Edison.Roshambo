@@ -1,7 +1,7 @@
 ﻿function GameManager(gamesHub) {
 
     var UNDEFINED_SHAPE_ID = 6;
-
+    var VICTORY_THRESHOLD = 3;
 
     var currentManager = this;
     this.gamesHub = gamesHub;
@@ -14,10 +14,14 @@
     this.tipWasUsed = false;
 //    this.userReloadedPage = false;
     this.userBlocked = false;
+
+
     var playingTimer = {};
     var isPlayingState = false;
     var opponentScores = 0;
     var ownerScores = 0;
+
+
     this.imagesIdToShapesIdMapper = {
         img1: 1,
         img2: 2,
@@ -42,12 +46,10 @@
     this.blockingTime = new Date();
     this.currentGame = { gameId: "", lobbyName: "", currentUserName: "", opponentName: "", rounds: [], gameState: "", lobbyOwnerName: "" };
     this.sendShape = function(gameId, roundNumber, figureId) {
-        // shapeNameOrValue, roundNumber, gameId
         var round = this.currentGame.rounds[roundNumber - 1];
         round && !round.shapeWasSent && isPlayingState && this.gamesHub.server.sendShape(gameId, roundNumber, figureId);
     };
-    this.userTip = function() {
-
+    this.useTip = function() {
         // round props: roundNumber, GameId,
         // if (tip was not used)
         //  sendRequest to Server
@@ -85,9 +87,11 @@
         var server = this.gamesHub.server;
         server.startRound(gameId, roundNumber);
     };
-    this.endRound = function(gameId, roundNumber, shapeChosen) {
+    
+    this.endGame = function(gameId, ownerScores, opponentScores) {
+        this.gamesHub.server.endGame(gameId, ownerScores, opponentScores);
+    }
 
-    };
     this.leaveGame = function() {
         var server = this.gamesHub.server;
         var lobbyName = this.currentGame.LobbyName;
@@ -144,7 +148,7 @@
     }
 
     function hideTimer() {
-        var timer = $("#tableTimer tr.time p").first();
+        var timer = $("#tableTimer tr.time h4").first();
         timer.css("display", "none");
         var tinfo = $("#tableTimer p.text-info").first();
         tinfo.css("display", "none");
@@ -156,7 +160,7 @@
     }
 
     function showTimer() {
-        var timer = $("#tableTimer tr.time p").first();
+        var timer = $("#tableTimer tr.time h4").first();
         timer.text(null);
         timer.css("display", "block");
         var tinfo = $("#tableTimer p.text-info").first();
@@ -173,6 +177,8 @@
             $("#oppScores").html(ownerScores);
         }
     }
+
+
     
 
     function startBeforeGameCountDown(roundNumber) {
@@ -244,7 +250,6 @@
     }
 
 
-
     function defineClientCallbacks(gamesHub) {
         var client = gamesHub.client;
         client.newUserAdded = onNewUserAdded;
@@ -271,8 +276,45 @@
         client.shapeWasSent = onShapeWasSent;
         client.roundEnded = onRoundEnded;
         client.correctLobbyOwning = onCorrectLobbyOwning;
+        client.gameEnded = onGameEnded;
     }
 
+    function onGameEnded(data) {
+
+        var game = currentManager.currentGame;
+
+        console.log("Game ended!!!");
+
+
+        if (data.Error) {
+            console.log(data.Error);
+            return;
+        }
+
+        game.winnerUserName = data.winnerUserName;
+        constructPlayingJournal();
+        // add game state checking in button "Leave lobby"
+        // if true set state "awaiting for players" and update db
+    }
+
+
+    function constructPlayingJournal() {
+
+        var container = $("<div></div>").addClass("summary");
+        container.append($("<p></p>").attr("id", "sumLobbyOwnerName"));
+        container.append($("<p></p>").attr("id", "sumOpponentName"));
+        
+        var table = $("<table></table>");
+
+        var headRow = $("<tr></tr>")
+            .append("<th>Round number</th>")
+            .append("<th></th>");
+    }
+
+    // empty yet
+    function onAddLobbyMessage(message) {
+        
+    }
 
 
     function onRoundEnded(data) {
@@ -327,6 +369,23 @@
 
         clearInterval(playingTimer);
         hideTimer();
+
+        if (ownerScores === VICTORY_THRESHOLD || opponentScores === VICTORY_THRESHOLD) {
+            
+            // request for game ending is pushed only from one player
+            if (ownerScores === VICTORY_THRESHOLD) {
+                if (currentManager.isUserLobbyOwner)
+               currentManager.endGame(currentManager.currentGame.gameId, ownerScores, opponentScores);
+            }
+
+            if (opponentScores === VICTORY_THRESHOLD) {
+                if (!currentManager.isUserLobbyOwner) {
+                    currentManager.endGame(currentManager.currentGame.gameId, ownerScores, opponentScores);
+                }
+            }
+            return;
+        }
+
         setTimeout(function () {
             currentManager.startPlayingIteration( ++currentManager.currentRoundNumber);
         }, 3000);
@@ -348,6 +407,7 @@
                 opponentScores++;
             } else ownerScores++;
         }
+
     }
 
     function onShapeWasSent(gameId, roundNumber, shapeId, error) {
@@ -505,12 +565,14 @@
         $(td).html(opName);
     }
 
-    function onAddLobbyMessage(message) {
-
-    }
-
     // callback when trying to join lobby
     function onLobbyJoined(data) {
+
+        if (data.Error) {
+            console.log(data.Error);
+            return;
+        }
+
 
         var manager = window.GameManager;
         var game = manager.currentGame;
@@ -611,6 +673,7 @@
         var td = row.find("td").get(2);
         $(td).removeClass("text-danger").html(lobby.LobbyState);
 
+
         if (lobby.LobbyState === window.Resources.LobbyStateAwaitingForPlayers) {
             td = row.find("td").get(3);
             $(td).html(null);
@@ -625,7 +688,9 @@
         }
 
         if (lobby.LobbyState === window.Resources.LobbyStateSummarizing) {
-
+            if (currentManager.currentGame.lobbyName === lobby.lobbyName) {
+                currentManager.currentGame.gameState = window.Resources.LobbyStateSummarizing;
+            }
         }
 
         if (lobby.LobbyState === window.Resources.LobbyStateBlocked) {
@@ -836,12 +901,23 @@ function setTempMessage(paragraph, message, interval)//, callback)
 
 function initLobbyJoin(buttonId) {
     var button = $("#" + buttonId);
-    var par = $("#messageLobbies");
     button.on("click", function() {
         var row = $("#tableLobbies tr.active");
         if (!row.length) return;
         var lobbyName = row.find("td")[0].innerText;
-        window.gamesHub.server.joinLobby(lobbyName);
+
+        var con = $.connection;
+        var hub = $.connection.hub;
+
+        if (con.state === $.signalR.connectionState.disconnected) {
+            hub.start().done(function() {
+                window.gamesHub.server.joinLobby(lobbyName);
+            }).fail(function() {
+                console.log("SignalR failed connect to server.");
+            });
+        } else {
+            window.gamesHub.server.joinLobby(lobbyName);
+        }
     });
 }
 
@@ -849,8 +925,8 @@ function initPlayingWorkflow() {
 
     var manager = window.GameManager;
 
-    $("#btnLeaveLobby").click(function() {
-        manager.leaveGame();
+    $("#btnLeaveLobby").click(function () {
+            manager.leaveGame();
     });
 }
 

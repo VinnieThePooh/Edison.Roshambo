@@ -274,12 +274,23 @@
         client.correctLobbyOwning = onCorrectLobbyOwning;
         client.gameEnded = onGameEnded;
         client.tipWasUsed = onTipWasUsed;
+        client.opponentUsedTip = onOpponentUsedTip;
+    }
+
+    function onOpponentUsedTip(data) {
+        var rNumber = data.RoundNumber;
+        var round = currentManager.currentGame.rounds[rNumber - 1];
+        console.log("Opponent used tip at round: " + rNumber);
+        round.opponentUsedTip = true;
     }
 
 
     function onTipWasUsed(data) {
-
+        var round = currentManager.currentGame.rounds[currentManager.currentRoundNumber-1];
+        
         currentManager.tipWasUsed = true;
+        round.tipWasUsed = true;
+        round.currentUserUsedTip = true;
         
         if (data.Error) {
             console.log(data.Error);

@@ -51,7 +51,7 @@ namespace Edison.Roshambo.Web.Hubs
 
         // todo: refactor
         // this logic must be encapsulated in separated entity
-        public async Task SendShape(int gameId, int roundNumber, int shapeId) 
+        public async Task SendShape(int gameId, int roundNumber, int shapeId)
         {
             try
             {
@@ -114,11 +114,15 @@ namespace Edison.Roshambo.Web.Hubs
         {
             var context = HttpContext.Current.GetOwinContext().Get<RoshamboContext>();
             var userName = HttpContext.Current.User.Identity.Name;
-
+            
             try
             {
+                var game = await context.Games.FindAsync(gameId);
+                var lobbyName = game.Lobby.LobbyName; 
+
                 var tip = await TipGenerator.GenerateTip(context, gameId, roundNumber, userName);
                 Clients.Caller.tipWasUsed(tip);
+                Clients.OthersInGroup(lobbyName).opponentUsedTip(new {GameId = gameId, RoundNumber = roundNumber});
             }
             catch (Exception e)
             {

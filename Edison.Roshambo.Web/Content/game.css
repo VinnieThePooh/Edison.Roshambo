@@ -108,6 +108,28 @@ div.opponentShape {
 }
 
 
+#journalItself {
+    padding-top: 5px;
+}
+
+#journalItself td, #journalItself th {
+    text-align: center;   
+}
+
+
+#journalItself td {
+    padding: 5px 7px;
+}
+
+#journalItself th {
+    vertical-align: middle;
+}
+
+
+#modalJournal .modal-dialog {
+    width: 640px;
+}
+
 
 .caption {
     position: absolute;

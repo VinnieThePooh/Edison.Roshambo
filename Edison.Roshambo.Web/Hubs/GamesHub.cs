@@ -354,7 +354,7 @@ namespace Edison.Roshambo.Web.Hubs
             {
 
             }
-        }
+         }
 
 
         // not  tested

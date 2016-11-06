@@ -8,8 +8,6 @@
     this.currentLobbyRoundDuration = 5;
     this.beforeRoundsTimeout = 3;
     this.isUserLobbyOwner = false;
-    this.currentUserScores = 0;
-    this.opponentScores = 0;
     this.currentRoundNumber = 0; // for tracing gaming process
     this.tipWasUsed = false;
 //    this.userReloadedPage = false;
@@ -18,10 +16,11 @@
 
     var playingTimer = {};
     var isPlayingState = false;
+    // lobby owner opponent scores
     var opponentScores = 0;
+    // owner scores
     var ownerScores = 0;
-
-
+    
     this.imagesIdToShapesIdMapper = {
         img1: 1,
         img2: 2,
@@ -32,14 +31,14 @@
     };
 
     this.shapesIdToNameMapper = {
-       map: {
-           1: "Rock",
-           2: "Paper",
-           3: "Scissors",
-           4: "Lizard",
-           5: "Spock", 
-           6: "Undefined"
-       }
+        map: {
+            1: "Rock",
+            2: "Paper",
+            3: "Scissors",
+            4: "Lizard",
+            5: "Spock",
+            6: "Undefined"
+        }
     };
 
 
@@ -87,11 +86,10 @@
         var server = this.gamesHub.server;
         server.startRound(gameId, roundNumber);
     };
-    
+
     this.endGame = function(gameId, ownerScores, opponentScores) {
         this.gamesHub.server.endGame(gameId, ownerScores, opponentScores);
-    }
-
+    };
     this.leaveGame = function() {
         var server = this.gamesHub.server;
         var lobbyName = this.currentGame.LobbyName;
@@ -104,6 +102,8 @@
         var round = {
             roundNumber: roundNumber,
             opponentShape: "",
+            currentUserScores: currentManager.currentUserScores,
+            opponentScores: currentManager.opponentScores,
             currentUserShape: "",
             opponentUsedTip: false,
             currentUserUsedTip: false,
@@ -142,7 +142,7 @@
     function showShapes() {
         var div = $("div.yourShape").first();
         div.css("display", "block");
-        
+
         div = $("div.opponentShape").first();
         div.css("display", "block");
     }
@@ -179,8 +179,6 @@
     }
 
 
-    
-
     function startBeforeGameCountDown(roundNumber) {
 
         isPlayingState = false;
@@ -213,7 +211,6 @@
     }
 
     function startWhileGameCountDown(roundNumber) {
-        
         var header = $("#announcementHeader h3");
         $(".asideTimer p.text-info").text("Time left to make your choice:");
         var timeInfo = $("#tableTimer tr.time h4").first();
@@ -281,6 +278,18 @@
 
     function onGameEnded(data) {
 
+        var button = $("#btnViewHistory").prop("disabled", false);
+        var journalItself = constructPlayingJournal("journalItself");
+        console.log(journalItself.html());
+        var modal = createBootstrapModalMarkup("modalJournal");
+        console.log(modal.html());
+        modal.find(".modal-body").append(journalItself);
+        button.on("click", function () {
+            console.log(modal.html());
+            modal.modal({ backdrop: "static" });
+        });
+
+
         var game = currentManager.currentGame;
 
         console.log("Game ended!!!");
@@ -292,28 +301,107 @@
         }
 
         game.winnerUserName = data.winnerUserName;
-        constructPlayingJournal();
-        // add game state checking in button "Leave lobby"
-        // if true set state "awaiting for players" and update db
     }
 
 
-    function constructPlayingJournal() {
+    function constructPlayingJournal(journalId) {
 
-        var container = $("<div></div>").addClass("summary");
-        container.append($("<p></p>").attr("id", "sumLobbyOwnerName"));
-        container.append($("<p></p>").attr("id", "sumOpponentName"));
+        var game = currentManager.currentGame;
+
+        var opponentName;
         
-        var table = $("<table></table>");
+        var container = $("<div></div>").addClass("summary").attr("id", journalId);
+
+        var span = $("<span></span>").css("font-weight", "bold").text("Lobby Owner: ");
+        var span2 = $("<span></span>").css("font-weight", "bold").text("Opponent: ");
+
+        container.append($("<p></p>").attr("id", "sumLobbyOwnerName").append(span).append(game.lobbyOwnerName));
+        container.append($("<p></p>").attr("id", "sumOpponentName").append(span2).append(game.opponentName));
+        container.css("margin-bottom", "5px");
+        
+        var table = $("<table></table>").addClass("table table-bordered");
+        var thead = $("<thead></thead>").addClass("thead-inverse");
+
+        if (currentManager.isUserLobbyOwner)
+            opponentName = game.opponentName;
+        else opponentName = game.lobbyOwnerName;
 
         var headRow = $("<tr></tr>")
-            .append("<th>Round number</th>")
-            .append("<th></th>");
+            .append($("<th>Round number</th>").attr("rowspan", "2 "))
+            .append($("<th></th>").html(game.currentUserName).attr("colspan", "3"))
+            .append($("<th></th>").html(opponentName).attr("colspan", "3"));
+
+        table.append(thead);
+        thead.append(headRow);
+
+        var subHeadRow = $("<tr></tr>")
+            .append($("<th></th>").html("Shape"))
+            .append($("<th></th>").html("Using tip"))
+            .append($("<th></th>").html("Scores"))
+            .append($("<th></th>").html("Scores"))
+            .append($("<th></th>").html("Shape"))
+            .append($("<th></th>").html("Using tip"));
+
+        thead.append(subHeadRow);
+
+        game.rounds.forEach(function(round) {
+            addRowToJournal(round, table);
+        });
+
+        container.append(table);
+        return container;
+    }
+
+    function createBootstrapModalMarkup(modalId) {
+        var basic = $("<div></div>").attr("id", modalId)
+                                    .attr("role", "dialog")
+                                    .attr("aria-hidden", true)
+                                    .addClass("modal fade");
+
+        var dialog = $("<div></div>").addClass("modal-dialog");
+        basic.append(dialog);
+
+        var content = $("<div></div>").addClass("modal-content");
+        dialog.append(content);
+
+        var header = $("<div></div>").addClass("modal-header").append($("<h4></h4>").addClass("text-center").text("Game history"));
+        var body = $("<div></div>").addClass("modal-body");
+        var footer = $("<div></div>").addClass("modal-footer");
+
+        var cancelButton = $("<button></button>")
+            .attr("data-dismiss", "modal")
+            .addClass("btn btn-default")
+            .text("Cancel");
+
+        footer.append(cancelButton);
+        content.append(header).append(body).append(footer);
+        console.log(basic.html());
+        return basic;
+    }
+
+
+    function removeBootstrapModalMarkup(modalId) {
+        var modal = $("#" + modalId);
+        if (modal)
+            modal.remove();
+    }
+
+
+    function addRowToJournal(round, table) {
+        var tr = $("<tr></tr>");
+        tr.append($("<td>").text(round.roundNumber))
+            .append($("<td>").text(round.currentUserShape))
+            .append($("<td>").text(round.currentUserUsedTip))
+            .append($("<td>").text(round.currentUserScores))
+            .append($("<td>").text(round.opponentScores))
+            .append($("<td>").text(round.opponentShape))
+            .append($("<td>").text(round.opponentUsedTip));
+        table.append(tr);
     }
 
     // empty yet
     function onAddLobbyMessage(message) {
-        
+
     }
 
 
@@ -334,7 +422,7 @@
         if (currentManager.isUserLobbyOwner) {
             round.opponentShape = mapper.map[opponentShapeId];
         } else round.opponentShape = mapper.map[ownerShapeId];
-
+        
 
         var imgSourceUrl;
         var prop;
@@ -346,8 +434,7 @@
                     break;
                 }
             }
-        }
-        else {
+        } else {
             for (prop in imagesMapper) {
                 if (imagesMapper[prop] === ownerShapeId) {
                     imgSourceUrl = $("#" + prop).attr("src");
@@ -357,25 +444,34 @@
             }
         }
 
-        
+
         if (winner) {
             setTempMessage(header, window.Resources.RoundGotAWinner.replace("*", winner));
             updateScores(winner);
             setScoresTable();
-        }
-        else {
+        } else {
             setTempMessage(header, window.Resources.DrawnRound);
+        }
+
+        // set round scores for journal
+        if (currentManager.isUserLobbyOwner) {
+            round.currentUserScores = ownerScores;
+            round.opponentScores = opponentScores;
+        } else {
+            round.currentUserScores = opponentScores;
+            round.opponentScores = ownerScores;
         }
 
         clearInterval(playingTimer);
         hideTimer();
 
         if (ownerScores === VICTORY_THRESHOLD || opponentScores === VICTORY_THRESHOLD) {
+
             
             // request for game ending is pushed only from one player
             if (ownerScores === VICTORY_THRESHOLD) {
                 if (currentManager.isUserLobbyOwner)
-               currentManager.endGame(currentManager.currentGame.gameId, ownerScores, opponentScores);
+                    currentManager.endGame(currentManager.currentGame.gameId, ownerScores, opponentScores);
             }
 
             if (opponentScores === VICTORY_THRESHOLD) {
@@ -386,23 +482,20 @@
             return;
         }
 
-        setTimeout(function () {
-            currentManager.startPlayingIteration( ++currentManager.currentRoundNumber);
-        }, 3000);
+        setTimeout(function() {
+            currentManager.startPlayingIteration(++currentManager.currentRoundNumber);
+        }, 2000);
     }
 
     function updateScores(winner) {
-        if (currentManager.isUserLobbyOwner)
-        {
+        if (currentManager.isUserLobbyOwner) {
             if (winner === currentManager.currentGame.currentUserName) {
                 ownerScores++;
-            }
-            else {
+            } else {
                 opponentScores++;
             }
-            
-        }
-        else {
+
+        } else {
             if (winner === currentManager.currentGame.currentUserName) {
                 opponentScores++;
             } else ownerScores++;
@@ -416,7 +509,7 @@
             console.log(error);
             return;
         }
-        
+
         var manager = window.GameManager;
         var game = manager.currentGame;
         var round = game.rounds[roundNumber - 1];
@@ -428,7 +521,7 @@
 
         // set image here
 
-        
+
         var imgSourceUrl;
 
         for (var prop in imagesMapper) {
@@ -441,11 +534,9 @@
     }
 
 
-
     function onLobbyHasBeenUnblockedAll(data) {
 
     }
-
 
 
     function onLobbyHasBeenBlockedAll(data) {
@@ -499,7 +590,7 @@
     function onLobbyWasBlocked(data) {
         var name = data.LobbyName;
         var time = data.BlockingTime;
-        var tr = $("#tableLobbies").find("tr").filter(function () {
+        var tr = $("#tableLobbies").find("tr").filter(function() {
             return this.cells[0].textContent === name;
         });
         var span = $("<span>").css("color", "red").css("font-weight", "bold").html(window.Resources.LobbyStateBlocked);
@@ -507,23 +598,23 @@
     }
 
     function onPlayerLeftTheGame(data) {
-        var visible = $('#playingModal').is(':visible');
+        var visible = $("#playingModal").is(":visible");
         if (visible) {
             var p = $("#gameMessage");
             setTempMessage(p, data.Message);
-            setTimeout(function () {
-                $('#playingModal').modal('hide');
+            setTimeout(function() {
+                $("#playingModal").modal("hide");
             }, 3000);
         }
     }
 
     function onLobbyOwnerLeftTheGame(data) {
-        var visible = $('#playingModal').is(':visible');
+        var visible = $("#playingModal").is(":visible");
         if (visible) {
             var p = $("#gameMessage");
             setTempMessage(p, data.Message);
-            setTimeout(function () {
-                $('#playingModal').modal('hide');
+            setTimeout(function() {
+                $("#playingModal").modal("hide");
             }, 3000);
         }
     }
@@ -532,7 +623,7 @@
     // lobbyname should be checked
     function onGameStarted(data) {
         var game = currentManager.currentGame;
-        
+
         game.gameId = data.GameId;
         game.lobbyOwnerName = data.LobbyOwnerName;
         game.opponentName = data.OpponentName;
@@ -542,8 +633,9 @@
         $("#playingModal").modal({ backdrop: "static" });
         $("#playingModal").data("lobbyname", data.LobbyName);
 
-        //init ui here
-
+        $("#btnViewHistory").prop("disabled", true);
+        removeBootstrapModalMarkup("modalJournal");
+       
         $(".yourScoresLegend").first().html(game.currentUserName);
 
         if (game.currentUserName === data.OpponentName) {
@@ -615,11 +707,9 @@
     }
 
 
-
-
     function onUserLeft(user) {
         var par = $("#messageUsers");
-        var row = $("#tableUsers td").filter(function () {
+        var row = $("#tableUsers td").filter(function() {
             return $(this).text() == user.UserName;
         }).closest("tr");
         row.remove();
@@ -786,7 +876,7 @@ function initImagesHandlers() {
 
     var manager = this.GameManager;
     var currentGame = manager.currentGame;
-    
+
 
     Array.from($(".imagesList .thumbnail")).forEach(function(th) {
 
@@ -795,9 +885,8 @@ function initImagesHandlers() {
             var currentImageId = current.find("img").attr("id");
 
             var caption = current.find(".caption").toggleClass("hidden").toggleClass("visible");
-            if (caption.hasClass("visible"))
-            {
-                var others = $(".imagesList img").filter(function () {
+            if (caption.hasClass("visible")) {
+                var others = $(".imagesList img").filter(function() {
                     return $(this).attr("id") !== currentImageId;
                 });
 
@@ -810,7 +899,7 @@ function initImagesHandlers() {
                 manager.sendShape(currentGame.gameId, rnumber, shapeId);
             }
         });
-});
+    });
 }
 
 function initHandlers() {
@@ -846,7 +935,6 @@ function initGameStartup() {
 }
 
 
-
 function addUserToTable(table, user) {
     var row = $("<tr>");
     // add icon 
@@ -871,21 +959,20 @@ function addLobbyToTable(table, lobby) {
 
     if (lobby.LobbyState === window.Resources.LobbyStateBlocked) {
         row.append($("<td>").addClass("text-danger").text(lobby.LobbyState));
-    }
-    else row.append($("<td>").text(lobby.LobbyState));
+    } else row.append($("<td>").text(lobby.LobbyState));
 
     row.append($("<td>").text(lobby.OpponentName));
     table.append(row);
 }
 
 
-function setTempMessage(paragraph, message, interval)//, callback)
+function setTempMessage(paragraph, message, interval) //, callback)
 {
     interval = interval || 3;
     paragraph.text(message);
     var counter = 0;
 
-    var timer = setInterval(function () {
+    var timer = setInterval(function() {
         if (counter++ == interval) {
             paragraph.text(null);
             clearInterval(timer);
@@ -894,9 +981,6 @@ function setTempMessage(paragraph, message, interval)//, callback)
         };
     }, 1000);
 }
-
-
-
 
 
 function initLobbyJoin(buttonId) {
@@ -925,8 +1009,8 @@ function initPlayingWorkflow() {
 
     var manager = window.GameManager;
 
-    $("#btnLeaveLobby").click(function () {
-            manager.leaveGame();
+    $("#btnLeaveLobby").click(function() {
+        manager.leaveGame();
     });
 }
 

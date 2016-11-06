@@ -163,13 +163,15 @@
     </Compile>
     <Compile Include="Hubs\GamesHub.cs" />
     <Compile Include="Infrastructure\AppSettingsKeys.cs" />
-    <Compile Include="Infrastructure\GameStatesStrings.cs" />
     <Compile Include="Infrastructure\GameWorkflowMessages.cs" />
     <Compile Include="Infrastructure\HubResponseMessages.cs" />
     <Compile Include="Infrastructure\LobbyStateMapper.cs" />
     <Compile Include="Infrastructure\PlayerMetadata.cs" />
+    <Compile Include="Infrastructure\RandomShapeGenerator.cs" />
+    <Compile Include="Infrastructure\TipGenerator.cs" />
     <Compile Include="Infrastructure\WinnerDeterminant.cs" />
     <Compile Include="Models\LobbyProjection.cs" />
+    <Compile Include="Models\TipModel.cs" />
     <Compile Include="Models\UserProjection.cs" />
     <Compile Include="ViewModels\AccountViewModels.cs" />
     <Compile Include="ViewModels\ManageViewModels.cs" />

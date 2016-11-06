@@ -19,7 +19,7 @@ namespace Edison.Roshambo.Web.Hubs
     public class GamesHub : Hub
     {
         public static readonly object Locker = new object();
-
+        
         public Task AddUser(UserProjection projection)
         {
             return Task.Run(() =>
@@ -108,6 +108,26 @@ namespace Edison.Roshambo.Web.Hubs
             }
         }
 
+
+        //todo: refactor 
+        public async Task UseTip(int gameId, int roundNumber)
+        {
+            var context = HttpContext.Current.GetOwinContext().Get<RoshamboContext>();
+            var userName = HttpContext.Current.User.Identity.Name;
+
+            try
+            {
+                var tip = await TipGenerator.GenerateTip(context, gameId, roundNumber, userName);
+                Clients.Caller.tipWasUsed(tip);
+            }
+            catch (Exception e)
+            {
+                Clients.Caller.tipWasUsed(new {Error = e.ToString()});
+            }
+        }
+
+
+        
 
         // this method is called only once from winner. 
         // just to simplify

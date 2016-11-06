@@ -48,15 +48,13 @@
         var round = this.currentGame.rounds[roundNumber - 1];
         round && !round.shapeWasSent && isPlayingState && this.gamesHub.server.sendShape(gameId, roundNumber, figureId);
     };
-    this.useTip = function() {
-        // round props: roundNumber, GameId,
-        // if (tip was not used)
-        //  sendRequest to Server
-        // if (opponent did send shape)
-        // actually use tip - return result. 
-        //otherwise  - no
-        // tip burns anyway
+
+    this.useTip = function () {
+        var gameId = this.currentGame.gameId;
+        var rNumber = this.currentRoundNumber;
+        !this.tipWasUsed && isPlayingState && gamesHub.server.useTip(gameId, rNumber);
     };
+
     this.unblockUser = function() {
         var manager = this;
         var hub = $.connection.hub;
@@ -97,7 +95,8 @@
         $("#playingModal").modal("hide");
     };
 
-    this.startPlayingIteration = function(roundNumber) {
+    this.startPlayingIteration = function (roundNumber) {
+        
         var game = this.currentGame;
         var round = {
             roundNumber: roundNumber,
@@ -267,16 +266,52 @@
         client.roundStarted = onRoundStarted;
         client.userHasBeenBlocked = onUserHasBeenBlocked;
         client.userHasBeenUnblocked = onUserHasBeenUnblocked;
-        client.lobbyHasBeenBlocked = onlobbyHasBeenBlocked;
-        client.lobbyHasBeenBlockedAll = onLobbyHasBeenBlockedAll;
-        client.lobbyHasBeenUnblockedAll = onLobbyHasBeenUnblockedAll;
+//        client.lobbyHasBeenBlocked = onlobbyHasBeenBlocked;
+//        client.lobbyHasBeenBlockedAll = onLobbyHasBeenBlockedAll;
+//        client.lobbyHasBeenUnblockedAll = onLobbyHasBeenUnblockedAll;
         client.shapeWasSent = onShapeWasSent;
         client.roundEnded = onRoundEnded;
         client.correctLobbyOwning = onCorrectLobbyOwning;
         client.gameEnded = onGameEnded;
+        client.tipWasUsed = onTipWasUsed;
     }
 
+
+    function onTipWasUsed(data) {
+
+        currentManager.tipWasUsed = true;
+        
+        if (data.Error) {
+            console.log(data.Error);
+            return;
+        }
+
+        var p = $("#gameMessage");
+        var message = window.Resources.TipUsingFailed;
+
+        if (!data.TipSucceeded) {
+            setTempMessage(p, message);
+            }
+        else {
+            var s1 = $("<span></span>").addClass("text-danger").append(data.ShapeOne);
+            var s2 = $("<span></span>").addClass("text-danger").append(data.ShapeTwo);
+            var tempPar = $("<p></p>");
+            tempPar.append("Opponent picked one of two figures: ")
+                .append(s1)
+                .append(" or ")
+                .append(s2)
+                .append(".Try to guess :).");
+            setTempMessage(p, tempPar.text());
+        }
+    }
+
+
     function onGameEnded(data) {
+
+        if (data.Error) {
+            console.log(data.Error);
+            return;
+        }
 
         var button = $("#btnViewHistory").prop("disabled", false);
         var journalItself = constructPlayingJournal("journalItself");
@@ -293,13 +328,6 @@
         var game = currentManager.currentGame;
 
         console.log("Game ended!!!");
-
-
-        if (data.Error) {
-            console.log(data.Error);
-            return;
-        }
-
         game.winnerUserName = data.winnerUserName;
     }
 
@@ -406,6 +434,7 @@
 
 
     function onRoundEnded(data) {
+        isPlayingState = false;
         var ownerShapeId = data.OwnerShapeId;
         var opponentShapeId = data.OpponentShapeId;
         var winner = data.WinnerUsername;
@@ -519,9 +548,6 @@
         round.shapeWasSent = true;
         round.currentUserShape = mapper.map[shapeId];
 
-        // set image here
-
-
         var imgSourceUrl;
 
         for (var prop in imagesMapper) {
@@ -532,27 +558,7 @@
             }
         }
     }
-
-
-    function onLobbyHasBeenUnblockedAll(data) {
-
-    }
-
-
-    function onLobbyHasBeenBlockedAll(data) {
-        // message + blocking ui
-    }
-
-
-    function onlobbyHasBeenBlocked(data) {
-        var message = data.Message;
-        var p = $("#messageUsers");
-        // message to lobby owner
-        setTempMessage(p, message);
-        // + blocking ui
-        // start button only
-        // + add some icon
-    }
+    
 
 
     function onUserHasBeenUnblocked(message) {
@@ -622,7 +628,10 @@
     // just ui
     // lobbyname should be checked
     function onGameStarted(data) {
+
+        currentManager.tipWasUsed = false;
         var game = currentManager.currentGame;
+
 
         game.gameId = data.GameId;
         game.lobbyOwnerName = data.LobbyOwnerName;
@@ -633,7 +642,10 @@
         $("#playingModal").modal({ backdrop: "static" });
         $("#playingModal").data("lobbyname", data.LobbyName);
 
-        $("#btnViewHistory").prop("disabled", true);
+        var btnHistory = $("#btnViewHistory");
+        btnHistory.prop("disabled", true);  
+        btnHistory.off();
+        
         removeBootstrapModalMarkup("modalJournal");
        
         $(".yourScoresLegend").first().html(game.currentUserName);
@@ -1011,6 +1023,10 @@ function initPlayingWorkflow() {
 
     $("#btnLeaveLobby").click(function() {
         manager.leaveGame();
+    });
+
+    $("#btnUseTip").click(function() {
+        manager.useTip();
     });
 }
 

@@ -22,9 +22,10 @@
                 NextRoundWillStartIn: '@GameWorkflowMessages.NextRoundWillStartIn',
                 YourBlockingExpiresIn: '@GameWorkflowMessages.YourBlockingExpiresIn',
                 DrawnRound: '@GameWorkflowMessages.DrawnRound',
-                RoundGotAWinner: '@GameWorkflowMessages.RoundGotAWinner'
+                RoundGotAWinner: '@GameWorkflowMessages.RoundGotAWinner',
+                GameGotAWinner: '@GameWorkflowMessages.GameGotAWinner',
+                TipUsingFailed: '@GameWorkflowMessages.TipUsingFailed'
             };
-
 
             window.Resources = resources;
             console.log("Window.load");
@@ -89,7 +90,7 @@
         <p id="messageUsers" class="text-info"></p>
         <p id="messageLobbies" class="text-info"></p>
     </div>
-    <div class="buttons info">
+    <div class="buttons info btn-group">
         <button id="btnCreateLobby"data-toggle="modal" data-target="#modalWindow" class="btn btn-default" type="button">Create lobby</button>
         <button id="btnJoinToLobby" data-toggle="modal" data-target="#joinLobbyModal" class="btn btn-default" type="button">Join selected lobby</button>
         <button id="btnLeaveJoinedLobby" data-toggle="modal" data-target="#leaveLobbyModal" class="btn btn-default" type="button">Leave joined lobby</button>
@@ -273,11 +274,12 @@
                             </div>
                     </div>
                     <footer>
-                        <div class="buttons">
+                        <div class="buttons btn-group">
                             <button type="button" id="btnLeaveLobby" class="btn btn-default">Leave lobby</button>
+                            <button type="button" id="btnUseTip" class="btn btn-default">Use tip</button>
                             <button type="button" id="btnViewHistory" class="btn btn-default">View history</button>
                         </div>
-                        <p id="gameMessage"></p>
+                        <p id="gameMessage" class="text-info"></p>
                         <div class="imagesList"></div>
                     </footer>
                 </div>

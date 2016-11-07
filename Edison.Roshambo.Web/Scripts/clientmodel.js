@@ -20,6 +20,9 @@
     var opponentScores = 0;
     // owner scores
     var ownerScores = 0;
+    this.isUserJoinedLobby = false;
+
+
     
     this.imagesIdToShapesIdMapper = {
         img1: 1,
@@ -88,7 +91,7 @@
     this.endGame = function(gameId, ownerScores, opponentScores) {
         this.gamesHub.server.endGame(gameId, ownerScores, opponentScores);
     };
-    this.leaveGame = function() {
+    this.leaveLobby = function() {
         var server = this.gamesHub.server;
         var lobbyName = this.currentGame.LobbyName;
         server.leaveLobby(lobbyName);
@@ -263,18 +266,41 @@
         client.gameStarted = onGameStarted;
         client.lobbyOwnerLeftTheGame = onLobbyOwnerLeftTheGame;
         client.playerLeftTheGame = onPlayerLeftTheGame;
-        client.roundStarted = onRoundStarted;
+        client.lobbyHasBeenBlocked = onLobbyHasBeenBlocked;
         client.userHasBeenBlocked = onUserHasBeenBlocked;
         client.userHasBeenUnblocked = onUserHasBeenUnblocked;
-//        client.lobbyHasBeenBlocked = onlobbyHasBeenBlocked;
-//        client.lobbyHasBeenBlockedAll = onLobbyHasBeenBlockedAll;
-//        client.lobbyHasBeenUnblockedAll = onLobbyHasBeenUnblockedAll;
         client.shapeWasSent = onShapeWasSent;
         client.roundEnded = onRoundEnded;
         client.correctLobbyOwning = onCorrectLobbyOwning;
         client.gameEnded = onGameEnded;
         client.tipWasUsed = onTipWasUsed;
         client.opponentUsedTip = onOpponentUsedTip;
+
+        // this callback for user who is leaving lobby
+        client.userLeftLobby = onUserLeftLobby;
+    }
+
+    // empty yet
+    function onLobbyHasBeenBlocked(data) {
+        
+
+
+    }
+
+
+    // actually data is not needed here
+    // todo: refactor
+    function onUserLeftLobby(data) {
+
+        if (data.Error) {
+            console.log(data.Error);
+            return;
+        }
+        
+        currentManager.isUserJoinedLobby = false;
+        $("#btnLeaveJoinedLobby").prop("disabled", true);
+        var p = $("#messageUsers");
+        setTempMessage(p, window.Resources.YouSuccessfullyLeftLobby);
     }
 
     function onOpponentUsedTip(data) {
@@ -467,9 +493,11 @@
         table.append(tr);
     }
 
-    // empty yet
-    function onAddLobbyMessage(message) {
-
+    // todo: refactor
+    function onAddLobbyMessage(data) {
+        var message = data.Message;
+        var p = $("#messageLobbies");
+        setTempMessage(p, message);
     }
 
 
@@ -628,9 +656,6 @@
         beginCountDownToUnblock(5);
     }
 
-    function onRoundStarted(data) {
-
-    }
 
     function onLobbyWasBlocked(data) {
         var name = data.LobbyName;
@@ -711,11 +736,16 @@
     // callback when trying to join lobby
     function onLobbyJoined(data) {
 
+        
+
         if (data.Error) {
             console.log(data.Error);
             return;
         }
 
+        // enable button for joining lobby
+        currentManager.isUserJoinedLobby = true;
+        $("#btnLeaveJoinedLobby").prop("disabled", !currentManager.isUserJoinedLobby);
 
         var manager = window.GameManager;
         var game = manager.currentGame;
@@ -954,20 +984,32 @@ function initImagesHandlers() {
 }
 
 function initHandlers() {
+    var manager = window.GameManager;
     $("#btnJoinToLobby").prop("disabled", true);
-    $("#btnLeaveJoinedLobby").prop("disabled", true);
+    var btnLeaveLobby = $("#btnLeaveJoinedLobby");
+
+
+    btnLeaveLobby.prop("disabled", true);
+
+    btnLeaveLobby.click(function() {
+        manager.leaveLobby();
+    });
+
 
     var table = $("#tableLobbies");
-    var manager = window.GameManager;
     table.on("click", ".clickable-row", function(event) {
+        
         var current = $(this);
         current.toggleClass("active").siblings().removeClass("active");
         var lobbyStatus = current.find("td")[2].innerText;
         var lobbyOwner = current.find("td")[1].innerText;
         var button = $("#btnJoinToLobby");
-        if (manager.userBlocked || !current.hasClass("active") || lobbyStatus != window.Resources.LobbyStateAwaitingForPlayers || lobbyOwner == window.UserName) {
-            button.prop("disabled", true);
-        } else button.prop("disabled", false);
+
+        if (manager.userBlocked || !current.hasClass("active") || lobbyStatus !== window.Resources.LobbyStateAwaitingForPlayers || lobbyOwner === window.UserName)
+        {
+             button.prop("disabled", true);
+        }
+        else button.prop("disabled", false);
 
     });
 }
@@ -988,8 +1030,7 @@ function initGameStartup() {
 
 function addUserToTable(table, user) {
     var row = $("<tr>");
-    // add icon 
-    //     row.append($("<td>").text(user.UserName));
+    // add icon too
     row.append($("<td>").text(user.UserName));
     table.append(row);
 }
@@ -999,10 +1040,16 @@ function addLobbyToTable(table, lobby) {
     var currentGame = manager.currentGame;
     var currentUserName = window.UserName;
 
-    if (lobby.LobbyOwner == currentUserName) {
+    if (lobby.LobbyOwner === currentUserName) {
         currentGame.LobbyOwnerName = currentUserName;
     }
 
+    if (currentUserName === lobby.OpponentName) {
+        manager.isUserJoinedLobby = true;
+        manager.currentGame.LobbyName = lobby.LobbyName;
+        manager.currentGame.LobbyOwnerName = lobby.LobbyOwner;
+        $("#btnLeaveJoinedLobby").prop("disabled", !manager.isUserJoinedLobby);
+    }
 
     var row = $("<tr>").addClass("clickable-row").attr("id", lobby.LobbyId);
     row.append($("<td>").text(lobby.LobbyName));
@@ -1017,7 +1064,7 @@ function addLobbyToTable(table, lobby) {
 }
 
 
-function setTempMessage(paragraph, message, interval) //, callback)
+function setTempMessage(paragraph, message, interval)
 {
     interval = interval || 3;
     paragraph.text(message);
@@ -1027,8 +1074,6 @@ function setTempMessage(paragraph, message, interval) //, callback)
         if (counter++ == interval) {
             paragraph.text(null);
             clearInterval(timer);
-//            if (callback)
-//                callback();
         };
     }, 1000);
 }
@@ -1061,7 +1106,7 @@ function initPlayingWorkflow() {
     var manager = window.GameManager;
 
     $("#btnLeaveLobby").click(function() {
-        manager.leaveGame();
+        manager.leaveLobby();
     });
 
     $("#btnUseTip").click(function() {

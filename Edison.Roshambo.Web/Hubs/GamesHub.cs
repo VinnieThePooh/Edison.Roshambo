@@ -311,13 +311,16 @@ namespace Edison.Roshambo.Web.Hubs
                 lobby.Players.Remove(opponent);
                 context.SaveChanges();
                 Game game;
-                
+
                 // opponents leaves the game
                 if (opponent.IdUser.Equals(user.Id))
                 {
                     if (criticalTime)
                     {
-                        game = context.Games.Single(g => g.IdLobbyOwner.Equals(lobby.LobbyOwner.Id) && string.IsNullOrEmpty(g.WinnerUserName));
+                        game =
+                            context.Games.Single(
+                                g =>
+                                    g.IdLobbyOwner.Equals(lobby.LobbyOwner.Id) && string.IsNullOrEmpty(g.WinnerUserName));
                         game.WinnerUserName = lobby.LobbyOwner.UserName;
                         var message = string.Format(HubResponseMessages.LobbyChallengerLeftLobbyInCriticalTime, userName);
                         Clients.Group(lobbyName, opConId).playerLeftTheGame(new {Message = message});
@@ -338,7 +341,8 @@ namespace Edison.Roshambo.Web.Hubs
                     }
                     else
                     {
-                        Clients.Group(lobbyName).addLobbyMessage(string.Format(HubResponseMessages.LobbyChallengerLeftLobby, userName));
+                        Clients.Client(lobby.LobbyOwner.ConnectionId).addLobbyMessage(new {Message = string.Format(HubResponseMessages.LobbyChallengerLeftLobby, userName)});
+                        Clients.Caller.userLeftLobby(new {lobby.LobbyId, lobby.LobbyName});
                     }
                     SetLobbyState(context, LobbyStateNames.AwaitingToPlayers, lobbyName);
                 }
@@ -349,13 +353,14 @@ namespace Edison.Roshambo.Web.Hubs
                     if (criticalTime)
                     {
                         game = context.Games.Single(g => g.IdLobbyOwner.Equals(lobby.LobbyOwner.Id) && string.IsNullOrEmpty(g.WinnerUserName));
+
                         var now = DateTime.Now;
                         lobby.BlockingTime = now;
                         game.WinnerUserName = opName;
                         SetLobbyState(context, LobbyStateNames.Blocked, lobbyName);
 
                         Clients.Group(lobbyName, Context.ConnectionId).lobbyOwnerLeftTheGame(new {Message = message});
-                        Clients.All.lobbyHasBeenBlockedAll(new {lobby.LobbyName, BlockingTime = TimeSpan.FromMinutes(1)});
+                        // Clients.All.lobbyHasBeenBlockedAll(new {lobby.LobbyName, BlockingTime = TimeSpan.FromMinutes(1)});
 
                         var time = ConfigurationManager.AppSettings[AppSettingsKeys.UserBlockingTime];
                         message = string.Format(HubResponseMessages.LobbyBlockingMessage, time);
@@ -363,7 +368,7 @@ namespace Edison.Roshambo.Web.Hubs
                         //message to lobby owner about lobby blocking
                         var data = new {Message = message, LobbyName = lobbyName};
                         Clients.Client(user.ConnectionId).userHasBeenBlocked(new {Message = message});
-                        //Clients.Client(user.ConnectionId).lobbyHasBeenBlocked(data);
+                        Clients.Client(user.ConnectionId).lobbyHasBeenBlocked(data);
                     }
                     else
                     {
@@ -376,9 +381,9 @@ namespace Edison.Roshambo.Web.Hubs
             }
             catch (Exception e)
             {
-
+                Clients.Caller.userLeftLobby(new {Error = e.ToString()});
             }
-         }
+        }
 
 
         // not  tested

@@ -506,7 +506,7 @@ namespace Edison.Roshambo.Web.Hubs
             }
             catch (Exception exc)
             {
-                var k = 0;
+                 Clients.Caller.gameStarted(new  { Error = exc.ToString()});
             }
         }
 

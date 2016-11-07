@@ -7,6 +7,10 @@
     float: left;
 }
 
+#tipsCount {
+    padding-left: 5px;
+}
+
 .field {
     float: left;
     width: 50%;
@@ -62,9 +66,28 @@
 }
 
 
+#tableScores {
+    width: 80%;
+}
+
+.headerTipsLeft {
+    margin-left: 10%;
+    margin-top: 20px;
+}
+
+#tableScores th:first-child {
+    text-align: end;
+}
+
+#tableScores th:last-child {
+    text-align: left;
+}
+
+
 #tableTimer p {
     font-size: 10px;
 }
+
 
 .modal-body {
     padding-top: 0;
@@ -98,7 +121,6 @@ div.opponentShape {
 .imagesList {
     margin: 5px auto;
     width: 858px;
-    padding-left: 30px;
 }
 
 .thumbnail {

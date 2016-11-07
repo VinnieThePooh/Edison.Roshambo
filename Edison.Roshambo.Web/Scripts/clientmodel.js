@@ -16,6 +16,8 @@
 
     var playingTimer = {};
     var isPlayingState = false;
+    var tipsCount = 1;
+
     // lobby owner opponent scores
     var opponentScores = 0;
     // owner scores
@@ -55,7 +57,7 @@
     this.useTip = function () {
         var gameId = this.currentGame.gameId;
         var rNumber = this.currentRoundNumber;
-        !this.tipWasUsed && isPlayingState && gamesHub.server.useTip(gameId, rNumber);
+        tipsCount > 0 && !this.tipWasUsed && isPlayingState && gamesHub.server.useTip(gameId, rNumber);
     };
 
     this.unblockUser = function() {
@@ -317,7 +319,12 @@
         currentManager.tipWasUsed = true;
         round.tipWasUsed = true;
         round.currentUserUsedTip = true;
-        
+
+        if (tipsCount > 0)
+            tipsCount--;
+
+        $("#tipsCount").text(tipsCount);
+
         if (data.Error) {
             console.log(data.Error);
             return;
@@ -693,6 +700,12 @@
     // lobbyname should be checked
     function onGameStarted(data) {
 
+        if (data.Error) {
+            console.log(data.Error);
+            return;
+        }
+
+
         currentManager.tipWasUsed = false;
         var game = currentManager.currentGame;
 
@@ -703,6 +716,7 @@
         game.lobbyName = data.LobbyName;
         game.rounds = [];
 
+        $("#tipsCount").text(tipsCount);
         $("#playingModal").modal({ backdrop: "static" });
         $("#playingModal").data("lobbyname", data.LobbyName);
 

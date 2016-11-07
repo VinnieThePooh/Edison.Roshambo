@@ -277,10 +277,42 @@
         client.gameEnded = onGameEnded;
         client.tipWasUsed = onTipWasUsed;
         client.opponentUsedTip = onOpponentUsedTip;
-
         // this callback for user who is leaving lobby
         client.userLeftLobby = onUserLeftLobby;
+        client.userLeftSite = onUserLeftSite;
+        client.userJoinedSite = onUserJoinedSite;
     }
+
+    function onUserLeftSite(data) {
+        var name = data.UserName;
+        var email = data.UserEmail;
+
+        var targetRow = $("#tableUsers tr").filter(function() {
+            return $(this).data("email") === email && $(this).text() === name;
+        });
+
+        if (targetRow)
+            targetRow.remove();
+    }
+
+
+    function onUserJoinedSite(data) {
+
+        var email = data.UserEmail;
+        var name = data.UserName;
+
+        var tableUsers = $("#tableUsers");
+        var targetRow = $("#tableUsers tr").filter(function () {
+            return $(this).data("email") === email && $(this).text() === name;
+        });
+
+        if (!targetRow.length) {
+            var row = $("<tr></tr>").data("email", data.UserEmail);
+            row.append($("<td></td>").text(data.UserName));
+            tableUsers.append(row);
+        }
+    }
+    
 
     // empty yet
     function onLobbyHasBeenBlocked(data) {
@@ -465,7 +497,7 @@
 
         footer.append(cancelButton);
         content.append(header).append(body).append(footer);
-        console.log(basic.html());
+        //console.log(basic.html());
         return basic;
     }
 
@@ -1046,6 +1078,7 @@ function addUserToTable(table, user) {
     var row = $("<tr>");
     // add icon too
     row.append($("<td>").text(user.UserName));
+    row.data("email", user.UserEmail);
     table.append(row);
 }
 

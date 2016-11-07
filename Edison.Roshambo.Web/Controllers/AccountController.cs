@@ -4,6 +4,7 @@ using System.Web;
 using System.Web.Mvc;
 using Edison.Roshambo.Domain.Models;
 using Edison.Roshambo.Web.Hubs;
+using Edison.Roshambo.Web.Infrastructure;
 using Edison.Roshambo.Web.Models;
 using Edison.Roshambo.Web.ViewModels;
 using Microsoft.AspNet.Identity;
@@ -18,7 +19,7 @@ namespace Edison.Roshambo.Web.Controllers
     {
         private DefaultSignInManager _signInManager;
         private DefaultUserManager _userManager;
-        private IHubContext _gamesHubContext = GlobalHost.ConnectionManager.GetHubContext<GamesHub>();
+        private readonly IHubContext _gamesHubContext = GlobalHost.ConnectionManager.GetHubContext<GamesHub>();
 
         public AccountController()
         {
@@ -63,10 +64,8 @@ namespace Edison.Roshambo.Web.Controllers
                 return View(model);
             }
 
-            var result =
-                await
-                    SignInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe,
-                        shouldLockout: false);
+            var result = await SignInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, shouldLockout: false);
+
             switch (result)
             {
                 case SignInStatus.Success:
@@ -77,8 +76,7 @@ namespace Edison.Roshambo.Web.Controllers
                         UserName = model.Email
                     };
 
-                    AddOnlineUser(newUser);
-                    _gamesHubContext.Clients.All.newUserAdded(newUser);
+                    OnlineUsersTracker.AddOnlineUser(newUser);
                     return RedirectToLocal(returnUrl);
                 }
                 case SignInStatus.Failure:
@@ -111,6 +109,7 @@ namespace Edison.Roshambo.Web.Controllers
                 if (result.Succeeded)
                 {
                     await SignInManager.SignInAsync(user, false, false);
+                    OnlineUsersTracker.AddOnlineUser(new UserProjection() {UserEmail = model.Email, UserName =  model.Email});
                     return RedirectToAction("Index", "Home");
                 }
                 AddErrors(result);
@@ -163,9 +162,7 @@ namespace Edison.Roshambo.Web.Controllers
 
             var userName = HttpContext.User.Identity.Name;
             var userProjection = new UserProjection() {UserEmail = userName, UserName = userName};
-
-            RemoveOnlineUser(userProjection);
-            _gamesHubContext.Clients.All.userLeft(userProjection);
+            OnlineUsersTracker.RemoveOnlineUser(userProjection);
             return RedirectToAction("Index", "Home");
         }
         protected override void Dispose(bool disposing)
@@ -189,21 +186,6 @@ namespace Edison.Roshambo.Web.Controllers
         }
 
         #region Helpers
-
-
-        private void RemoveOnlineUser(UserProjection projection)
-        {
-            var user = MvcApplication.OnlineUsers.FirstOrDefault(u => u.UserEmail.Equals(projection.UserEmail));
-            if (user != null)
-                MvcApplication.OnlineUsers.Remove(user);
-        }
-
-        private void AddOnlineUser(UserProjection projection)
-        {
-            var user = MvcApplication.OnlineUsers.FirstOrDefault(u => u.UserEmail.Equals(projection.UserEmail));
-            if (user == null)
-                MvcApplication.OnlineUsers.Add(projection);
-        }
 
 
         // Used for XSRF protection when adding external logins

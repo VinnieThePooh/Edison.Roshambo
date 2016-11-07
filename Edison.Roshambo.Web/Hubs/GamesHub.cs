@@ -19,35 +19,6 @@ namespace Edison.Roshambo.Web.Hubs
     public class GamesHub : Hub
     {
         public static readonly object Locker = new object();
-        
-        public Task AddUser(UserProjection projection)
-        {
-            return Task.Run(() =>
-            {
-                var user = MvcApplication.OnlineUsers.FirstOrDefault(u => u.UserEmail.Equals(projection.UserEmail));
-
-                if (user == null)
-                {
-                    MvcApplication.OnlineUsers.Add(projection);
-                    Clients.All.newUserAdded(projection);
-                }
-            });
-        }
-
-        public Task RemoveUser(UserProjection projection)
-        {
-            return Task.Run(() =>
-            {
-                var user = MvcApplication.OnlineUsers.FirstOrDefault(u => u.UserEmail.Equals(projection.UserEmail));
-
-                if (user != null)
-                {
-                    MvcApplication.OnlineUsers.Remove(projection);
-                    Clients.All.userLeft(projection);
-                }
-            });
-        }
-
 
         // todo: refactor
         // this logic must be encapsulated in separated entity

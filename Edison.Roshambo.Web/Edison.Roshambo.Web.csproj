@@ -166,6 +166,7 @@
     <Compile Include="Infrastructure\GameWorkflowMessages.cs" />
     <Compile Include="Infrastructure\HubResponseMessages.cs" />
     <Compile Include="Infrastructure\LobbyStateMapper.cs" />
+    <Compile Include="Infrastructure\OnlineUsersTracker.cs" />
     <Compile Include="Infrastructure\PlayerMetadata.cs" />
     <Compile Include="Infrastructure\RandomShapeGenerator.cs" />
     <Compile Include="Infrastructure\TipGenerator.cs" />

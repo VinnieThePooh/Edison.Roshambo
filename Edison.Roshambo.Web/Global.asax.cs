@@ -1,13 +1,14 @@
 ﻿using System.Collections.Generic;
 using System.Data.Entity;
+using System.Linq;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.Optimization;
 using System.Web.Routing;
-using Edison.Roshambo.Web.Hubs;
+using Edison.Roshambo.Domain.DataAccess;
+using Edison.Roshambo.Web.Infrastructure;
 using Edison.Roshambo.Web.Models;
-using Microsoft.AspNet.SignalR;
-using Newtonsoft.Json;
+using Microsoft.AspNet.Identity.Owin;
 
 namespace Edison.Roshambo.Web
 {
@@ -17,32 +18,21 @@ namespace Edison.Roshambo.Web
 
         protected void Application_Start()
         {
-//            ReplaceDefaultSerializer();
             Database.SetInitializer(new CustomCreateDbIfNotExist());
             AreaRegistration.RegisterAllAreas();
             FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
             RouteConfig.RegisterRoutes(RouteTable.Routes);
             BundleConfig.RegisterBundles(BundleTable.Bundles);
-
         }
 
 
         protected void Session_End()
         {
-            var hubContext = GlobalHost.ConnectionManager.GetHubContext<GamesHub>();
             var user = HttpContext.Current.User;
+            var context = HttpContext.Current.GetOwinContext().Get<RoshamboContext>();
 
-            hubContext.Clients.All.userLeft(); 
-        }
-
-
-        private void ReplaceDefaultSerializer()
-        {
-            var serializerSettings = new JsonSerializerSettings();
-            serializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
-
-            var serializer = JsonSerializer.Create(serializerSettings);
-            GlobalHost.DependencyResolver.Register(typeof(JsonSerializer), () => serializer);
+            var toFind = context.Users.Single(u => u.UserName.Equals(user.Identity.Name));
+            OnlineUsersTracker.RemoveOnlineUser(new UserProjection() {UserName = toFind.UserName, UserEmail = toFind.Email});
         }
     }
 }

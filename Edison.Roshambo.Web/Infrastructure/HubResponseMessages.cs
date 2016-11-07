@@ -12,7 +12,7 @@
         public const string LobbyChallengerLeftLobbyInCriticalTime = "Player {0} left your lobby. He got autolose and will be prevented from playing for one minute";
         public const string UserHaveBeenBlockedForAWhile = "You have been blocked for {0} minute(s) due to leaving lobby while playing";
         public const string UserHaveBeenUnblocked = "You have been unblocked and can continue playing Roshambo";
-        public const string YouSuccessfullyJoinedLobby = "You successfully joined to lobby";
+        public const string YouSuccessfullyJoinedLobby = "You successfully joined lobby";
         public const string UserJoinedYourLobby = "{0} joined your lobby";
     }
 }

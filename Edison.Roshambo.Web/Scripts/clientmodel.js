@@ -324,6 +324,11 @@
             return;
         }
 
+        var game = currentManager.currentGame;
+        game.winnerUserName = data.WinnerUserName;
+
+        var header = $("#announcementHeader").find("h3");
+
         var button = $("#btnViewHistory").prop("disabled", false);
         var journalItself = constructPlayingJournal("journalItself");
         console.log(journalItself.html());
@@ -335,11 +340,9 @@
             modal.modal({ backdrop: "static" });
         });
 
-
-        var game = currentManager.currentGame;
-
+        
+        header.text(window.Resources.GameGotAWinner.replace("*",data.WinnerUserName));
         console.log("Game ended!!!");
-        game.winnerUserName = data.winnerUserName;
     }
 
 
@@ -354,8 +357,23 @@
         var span = $("<span></span>").css("font-weight", "bold").text("Lobby Owner: ");
         var span2 = $("<span></span>").css("font-weight", "bold").text("Opponent: ");
 
-        container.append($("<p></p>").attr("id", "sumLobbyOwnerName").append(span).append(game.lobbyOwnerName));
-        container.append($("<p></p>").attr("id", "sumOpponentName").append(span2).append(game.opponentName));
+        var p1 = $("<p></p>").attr("id", "sumLobbyOwnerName").append(span).append(game.lobbyOwnerName);
+
+        var image = new Image();
+        image.src = "\../Content/Images/winner-icon-1.png";
+        image.style.marginLeft = "10px";
+
+        if (game.winnerUserName === game.lobbyOwnerName)
+            p1.append($(image));
+        
+        container.append(p1);
+
+        var p2 = $("<p></p>").attr("id", "sumOpponentName").append(span2).append(game.opponentName);
+
+        if (game.winnerUserName === game.opponentName)
+            p2.append($(image));
+
+        container.append(p2);
         container.css("margin-bottom", "5px");
         
         var table = $("<table></table>").addClass("table table-bordered");
@@ -427,13 +445,24 @@
 
 
     function addRowToJournal(round, table) {
+
+        var length = currentManager.currentGame.rounds.length;
+
         var tr = $("<tr></tr>");
         tr.append($("<td>").text(round.roundNumber))
             .append($("<td>").text(round.currentUserShape))
-            .append($("<td>").text(round.currentUserUsedTip))
-            .append($("<td>").text(round.currentUserScores))
-            .append($("<td>").text(round.opponentScores))
-            .append($("<td>").text(round.opponentShape))
+            .append($("<td>").text(round.currentUserUsedTip));
+
+        // last round scores are highlighted
+        if (round.roundNumber === length)
+            tr.append($("<td>").append($("<span></span>").text(round.currentUserScores).css("font-weight", "bold")));
+        else tr.append($("<td>").text(round.currentUserScores));
+
+        if (round.roundNumber === length)
+            tr.append($("<td>").append($("<span></span>").text(round.opponentScores).css("font-weight", "bold")));
+        else tr.append($("<td>").text(round.opponentScores));
+
+        tr.append($("<td>").text(round.opponentShape))
             .append($("<td>").text(round.opponentUsedTip));
         table.append(tr);
     }
@@ -468,7 +497,7 @@
         var prop;
         if (currentManager.isUserLobbyOwner) {
             for (prop in imagesMapper) {
-                if (imagesMapper[prop] === opponentShapeId) {
+                if (imagesMapper.hasOwnProperty(prop) && imagesMapper[prop] === opponentShapeId) {
                     imgSourceUrl = $("#" + prop).attr("src");
                     $("#imgOpponentShape").attr("src", imgSourceUrl);
                     break;
@@ -476,7 +505,7 @@
             }
         } else {
             for (prop in imagesMapper) {
-                if (imagesMapper[prop] === ownerShapeId) {
+                if (imagesMapper.hasOwnProperty(prop) && imagesMapper[prop] === ownerShapeId) {
                     imgSourceUrl = $("#" + prop).attr("src");
                     $("#imgOpponentShape").attr("src", imgSourceUrl);
                     break;
@@ -506,7 +535,6 @@
         hideTimer();
 
         if (ownerScores === VICTORY_THRESHOLD || opponentScores === VICTORY_THRESHOLD) {
-
             
             // request for game ending is pushed only from one player
             if (ownerScores === VICTORY_THRESHOLD) {

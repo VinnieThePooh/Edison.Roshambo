@@ -194,6 +194,7 @@
     <Content Include="Content\Images\rock.png" />
     <Content Include="Content\Images\scissors.png" />
     <Content Include="Content\Images\spock.png" />
+    <Content Include="Content\Images\winner-icon-1.png" />
     <Content Include="favicon.ico" />
     <Content Include="fonts\glyphicons-halflings-regular.svg" />
     <Content Include="Global.asax" />

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-
-namespace Edison.Roshambo.Web.Models
+﻿namespace Edison.Roshambo.Web.Models
 {
     public class UserProjection
     {

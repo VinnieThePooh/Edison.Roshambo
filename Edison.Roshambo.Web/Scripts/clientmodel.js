@@ -317,8 +317,6 @@
     // empty yet
     function onLobbyHasBeenBlocked(data) {
         
-
-
     }
 
 
@@ -423,7 +421,7 @@
         var p1 = $("<p></p>").attr("id", "sumLobbyOwnerName").append(span).append(game.lobbyOwnerName);
 
         var image = new Image();
-        image.src = "\../Content/Images/winner-icon-1.png";
+        image.src = "\../Content/Images/trophy.png";
         image.style.marginLeft = "10px";
 
         if (game.winnerUserName === game.lobbyOwnerName)
@@ -690,7 +688,7 @@
         $("#btnLeaveJoinedLobby").prop("disabled", true);
         manager.userBlocked = true;
         manager.BlockingTime = new Date();
-        beginCountDownToUnblock(5);
+        beginCountDownToUnblock(60);
     }
 
 
@@ -910,6 +908,8 @@
 
         if (lobby.LobbyState === window.Resources.LobbyStateBlocked) {
             $(td).addClass("text-danger");
+            //clear opponent name
+            $(row.find("td").get(3)).text(null);
         }
 
         $("#joinLobbyModal").modal("hide");
@@ -962,13 +962,13 @@ function initBlocking() {
 
 
     if (manager.userBlocked) {
-        if (span < 5) { //60
+        if (span < 60) { 
             console.log("begin to block ui");
             $("#btnJoinToLobby").prop("disabled", true);
             $("#btnPlay").prop("disabled", true);
             $("#btnCreateLobby").prop("disabled", true);
             $("#btnLeaveJoinedLobby").prop("disabled", true);
-            beginCountDownToUnblock(5 - span);
+            beginCountDownToUnblock(60 - span);
         } else {
             manager.unblockUser();
         }

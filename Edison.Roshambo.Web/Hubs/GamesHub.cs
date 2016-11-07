@@ -62,6 +62,8 @@ namespace Edison.Roshambo.Web.Hubs
                         ownerShape = context.Set<GameShape>().Single(s => s.ShapeName.Equals(round.LobbyOwnerShapeName));
 
                     PlayerMetadata owner = new PlayerMetadata(lobbyOwnerName, ownerShape.ShapeName);
+
+                    // todo: fix: exception raises here sometimes
                     PlayerMetadata opponent = new PlayerMetadata(game.Lobby.Players.First().User.UserName, round.OpponentShapeName);
 
                     // define round results, winner
@@ -337,6 +339,7 @@ namespace Edison.Roshambo.Web.Hubs
                         message = string.Format(HubResponseMessages.LobbyBlockingMessage, time);
 
                         //message to lobby owner about lobby blocking
+                        // is not needed here actually
                         var data = new {Message = message, LobbyName = lobbyName};
                         Clients.Client(user.ConnectionId).userHasBeenBlocked(new {Message = message});
                         Clients.Client(user.ConnectionId).lobbyHasBeenBlocked(data);

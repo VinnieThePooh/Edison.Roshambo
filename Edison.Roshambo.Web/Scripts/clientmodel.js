@@ -307,7 +307,7 @@
         });
 
         if (!targetRow.length) {
-            var row = $("<tr></tr>").data("email", data.UserEmail);
+            var row = $("<tr></tr>").attr("data-email", data.UserEmail);
             row.append($("<td></td>").text(data.UserName));
             tableUsers.append(row);
         }
@@ -396,9 +396,8 @@
 
         var button = $("#btnViewHistory").prop("disabled", false);
         var journalItself = constructPlayingJournal("journalItself");
-        console.log(journalItself.html());
+
         var modal = createBootstrapModalMarkup("modalJournal");
-        console.log(modal.html());
         modal.find(".modal-body").append(journalItself);
         button.on("click", function () {
             console.log(modal.html());
@@ -407,7 +406,6 @@
 
         
         header.text(window.Resources.GameGotAWinner.replace("*",data.WinnerUserName));
-        console.log("Game ended!!!");
     }
 
 
@@ -1078,7 +1076,7 @@ function addUserToTable(table, user) {
     var row = $("<tr>");
     // add icon too
     row.append($("<td>").text(user.UserName));
-    row.data("email", user.UserEmail);
+    row.attr("data-email", user.UserEmail);
     table.append(row);
 }
 

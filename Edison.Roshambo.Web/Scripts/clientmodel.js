@@ -429,9 +429,9 @@
         
         container.append(p1);
 
-        var p2 = $("<p></p>").attr("id", "sumOpponentName").append(span2).append(game.opponentName);  
+        var p2 = $("<p></p>").attr("id", "sumOpponentName").append(span2).append(game.opponentName); 
 
-        if (game.winnerUserName === game.opponentName)
+        if (game.winnerUserName === game.opponentName) 
             p2.append($(image));
 
         container.append(p2);

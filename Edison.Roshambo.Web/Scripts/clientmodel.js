@@ -438,7 +438,7 @@
         container.css("margin-bottom", "5px");
         
         var table = $("<table></table>").addClass("table table-bordered");
-        var thead = $("<thead></thead>").addClass("thead-inverse");
+        var thead = $("<thead></thead>").addClass("thead-inverse"); 
 
         if (currentManager.isUserLobbyOwner)
             opponentName = game.opponentName;

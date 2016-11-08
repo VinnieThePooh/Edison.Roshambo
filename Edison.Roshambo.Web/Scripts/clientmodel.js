@@ -395,7 +395,7 @@
         var button = $("#btnViewHistory").prop("disabled", false);
         var journalItself = constructPlayingJournal("journalItself");
 
-        var modal = createBootstrapModalMarkup("modalJournal");
+        var modal = createBootstrapModalMarkup("modalJournal"); 
         modal.find(".modal-body").append(journalItself);
         button.on("click", function () {
             console.log(modal.html());

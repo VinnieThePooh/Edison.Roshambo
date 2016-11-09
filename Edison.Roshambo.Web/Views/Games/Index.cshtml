@@ -25,6 +25,7 @@
                 RoundGotAWinner: '@GameWorkflowMessages.RoundGotAWinner',
                 GameGotAWinner: '@GameWorkflowMessages.GameGotAWinner',
                 TipUsingFailed: '@GameWorkflowMessages.TipUsingFailed',
+                OpponentLeftLobby: '@HubResponseMessages.OpponentLeftLobby',
                 YouSuccessfullyLeftLobby: '@HubResponseMessages.YouSuccessfullyLeftLobby'
             };
 
@@ -55,6 +56,8 @@
 
             hub.start().done(function() {
                 console.log("Hub: connection started");
+
+                gamesHub.server.actualizeConnection();
 
                 gamesHub.server.getOnlineUsers().done(function(users) {
                         var table = $("#tableUsers");

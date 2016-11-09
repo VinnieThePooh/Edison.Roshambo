@@ -7,11 +7,20 @@
     this.gamesHub = gamesHub;
     this.currentLobbyRoundDuration = 5;
     this.beforeRoundsTimeout = 3;
+    
+    // this field is used while playing for defining owner
     this.isUserLobbyOwner = false;
     this.currentRoundNumber = 0; // for tracing gaming process
+
+
     this.tipWasUsed = false;
-//    this.userReloadedPage = false;
+    
     this.userBlocked = false;
+
+
+    
+
+
 
 
     var playingTimer = {};
@@ -22,9 +31,12 @@
     var opponentScores = 0;
     // owner scores
     var ownerScores = 0;
+
+    this.ownLobbyName = null;
+    this.joinedLobbyName = null;
+    this.joinedOpponentName = null;
+    
     this.isUserJoinedLobby = false;
-
-
     
     this.imagesIdToShapesIdMapper = {
         img1: 1,
@@ -48,7 +60,7 @@
 
 
     this.blockingTime = new Date();
-    this.currentGame = { gameId: "", lobbyName: "", currentUserName: "", opponentName: "", rounds: [], gameState: "", lobbyOwnerName: "" };
+    this.currentGame = { gameId: "", lobbyName: "", currentUserName: "", opponentName: "", rounds: [], lobbyOwnerName: "" };
     this.sendShape = function(gameId, roundNumber, figureId) {
         var round = this.currentGame.rounds[roundNumber - 1];
         round && !round.shapeWasSent && isPlayingState && this.gamesHub.server.sendShape(gameId, roundNumber, figureId);
@@ -79,7 +91,8 @@
         // ss must return: gameId, lobbyOwnerName, opponentName
         // set this values to currentGame properties 
         var server = gamesHub.server;
-        server.startGame(this.currentGame.opponentName);
+      if (this.joinedOpponentName)
+            server.startGame(this.joinedOpponentName);
     };
     this.startRound = function(roundNumber) {
         //this method is automatically called after previous round completed
@@ -95,7 +108,7 @@
     };
     this.leaveLobby = function() {
         var server = this.gamesHub.server;
-        var lobbyName = this.currentGame.LobbyName;
+        var lobbyName = this.joinedLobbyName;
         server.leaveLobby(lobbyName);
         $("#playingModal").modal("hide");
     };
@@ -264,7 +277,7 @@
         // callback for others 
         client.lobbyWasJoinedAll = onLobbyWasJoinedAll;
         client.lobbyStateChanged = onLobbyStateChanged;
-        client.addLobbyMessage = onAddLobbyMessage;
+        client.opponentLeftLobby = onOpponentLeftLobby;
         client.gameStarted = onGameStarted;
         client.lobbyOwnerLeftTheGame = onLobbyOwnerLeftTheGame;
         client.playerLeftTheGame = onPlayerLeftTheGame;
@@ -281,7 +294,17 @@
         client.userLeftLobby = onUserLeftLobby;
         client.userLeftSite = onUserLeftSite;
         client.userJoinedSite = onUserJoinedSite;
+        client.restoreClientData = onRestoreClientData; 
     }
+
+
+    function onRestoreClientData(data) {
+        currentManager.currentGame = {};
+
+
+
+    }
+
 
     function onUserLeftSite(data) {
         var name = data.UserName;
@@ -319,9 +342,7 @@
         
     }
 
-
-    // actually data is not needed here
-    // todo: refactor
+    
     function onUserLeftLobby(data) {
 
         if (data.Error) {
@@ -330,6 +351,8 @@
         }
         
         currentManager.isUserJoinedLobby = false;
+        currentManager.joinedLobbyName = null;
+
         $("#btnLeaveJoinedLobby").prop("disabled", true);
         var p = $("#messageUsers");
         setTempMessage(p, window.Resources.YouSuccessfullyLeftLobby);
@@ -529,8 +552,13 @@
     }
 
     // todo: refactor
-    function onAddLobbyMessage(data) {
-        var message = data.Message;
+    function onOpponentLeftLobby(data) {
+
+        var opName = data.OpponentName;
+        var message = window.Resources.OpponentLeftLobby.replace("*", opName);
+
+        currentManager.joinedOpponentName = null;
+       
         var p = $("#messageLobbies");
         setTempMessage(p, message);
     }
@@ -688,7 +716,7 @@
         $("#btnLeaveJoinedLobby").prop("disabled", true);
         manager.userBlocked = true;
         manager.BlockingTime = new Date();
-        beginCountDownToUnblock(60);
+        beginCountDownToUnblock(3);
     }
 
 
@@ -733,8 +761,8 @@
             return;
         }
 
-
         currentManager.tipWasUsed = false;
+        tipsCount = 1;
         var game = currentManager.currentGame;
 
 
@@ -754,11 +782,16 @@
         
         removeBootstrapModalMarkup("modalJournal");
        
-        $(".yourScoresLegend").first().html(game.currentUserName);
-
         if (game.currentUserName === data.OpponentName) {
-            $(".opponentScoresLegend").first().html(data.LobbyOwnerName);
-        } else $(".opponentScoresLegend").first().html(data.OpponentName);
+            {
+                $(".opponentScoresLegend").first().html(data.LobbyOwnerName);
+                $(".yourScoresLegend").first().html(data.OpponentName);
+            }
+        } else {
+
+            $(".opponentScoresLegend").first().html(data.OpponentName);
+            $(".yourScoresLegend").first().html(data.LobbyOwnerName);
+        }
 
         resetScores();
         setScoresTable();
@@ -778,15 +811,18 @@
     // callback when trying to join lobby
     function onLobbyJoined(data) {
 
-        
-
         if (data.Error) {
             console.log(data.Error);
             return;
         }
 
-        // enable button for joining lobby
         currentManager.isUserJoinedLobby = true;
+        currentManager.joinedLobbyName = data.LobbyName;
+
+
+
+        $("#btnJoinToLobby").prop("disabled", true);
+        // enable button for joining lobby
         $("#btnLeaveJoinedLobby").prop("disabled", !currentManager.isUserJoinedLobby);
 
         var manager = window.GameManager;
@@ -808,17 +844,18 @@
         setTempMessage(par, data.Message);
     }
 
-
+    // lobby owner gets notification here
     function onLobbyWasJoined(data) {
         var manager = window.GameManager;
-        var lobbyId = data.LobbyId;
+        manager.joinedOpponentName = data.OpponentName;
 
+        var lobbyId = data.LobbyId;
+        
         var game = manager.currentGame;
         game.currentUserName = data.CurrentUserName;
         game.LobbyOwnerName = data.CurrentUserName;
         game.opponentName = data.OpponentName;
         game.LobbyName = data.LobbyName;
-
 
         var row = $("#tableLobbies").find("tr#" + lobbyId);
         var oppTd = row.find("td").get(3);
@@ -962,13 +999,13 @@ function initBlocking() {
 
 
     if (manager.userBlocked) {
-        if (span < 60) { 
+        if (span < 3) { 
             console.log("begin to block ui");
             $("#btnJoinToLobby").prop("disabled", true);
             $("#btnPlay").prop("disabled", true);
             $("#btnCreateLobby").prop("disabled", true);
             $("#btnLeaveJoinedLobby").prop("disabled", true);
-            beginCountDownToUnblock(60 - span);
+            beginCountDownToUnblock(3 - span);
         } else {
             manager.unblockUser();
         }
@@ -1027,12 +1064,12 @@ function initImagesHandlers() {
     });
 }
 
+
+// todo: place all handlers here
 function initHandlers() {
     var manager = window.GameManager;
-    $("#btnJoinToLobby").prop("disabled", true);
+    var btnJoin = $("#btnJoinToLobby").prop("disabled", true);
     var btnLeaveLobby = $("#btnLeaveJoinedLobby");
-
-
     btnLeaveLobby.prop("disabled", true);
 
     btnLeaveLobby.click(function() {
@@ -1047,14 +1084,12 @@ function initHandlers() {
         current.toggleClass("active").siblings().removeClass("active");
         var lobbyStatus = current.find("td")[2].innerText;
         var lobbyOwner = current.find("td")[1].innerText;
-        var button = $("#btnJoinToLobby");
-
-        if (manager.userBlocked || !current.hasClass("active") || lobbyStatus !== window.Resources.LobbyStateAwaitingForPlayers || lobbyOwner === window.UserName)
+        
+        if (manager.userBlocked || !current.hasClass("active") || lobbyStatus !== window.Resources.LobbyStateAwaitingForPlayers || lobbyOwner === window.UserName || manager.isUserJoinedLobby)
         {
-             button.prop("disabled", true);
+             btnJoin.prop("disabled", true);
         }
-        else button.prop("disabled", false);
-
+        else btnJoin.prop("disabled", false);
     });
 }
 
@@ -1082,16 +1117,24 @@ function addUserToTable(table, user) {
 
 function addLobbyToTable(table, lobby) {
     var manager = window.GameManager;
+
     var currentGame = manager.currentGame;
     var currentUserName = window.UserName;
 
+    // user has own lobby
     if (lobby.LobbyOwner === currentUserName) {
         currentGame.LobbyOwnerName = currentUserName;
+        currentGame.currentUserName = currentUserName;
+        manager.ownLobbyName = lobby.LobbyName;
+        currentGame.opponentName = lobby.OpponentName;
+        manager.joinedOpponentName = lobby.OpponentName;
     }
 
+    // user joined some lobby
     if (currentUserName === lobby.OpponentName) {
+
         manager.isUserJoinedLobby = true;
-        manager.currentGame.LobbyName = lobby.LobbyName;
+        manager.joinedLobbyName = lobby.LobbyName;
         manager.currentGame.LobbyOwnerName = lobby.LobbyOwner;
         $("#btnLeaveJoinedLobby").prop("disabled", !manager.isUserJoinedLobby);
     }

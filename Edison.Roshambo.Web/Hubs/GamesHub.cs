@@ -110,7 +110,6 @@ namespace Edison.Roshambo.Web.Hubs
         // just to simplify
         public async Task EndGame(int gameId, int ownerScores, int opponentScores)
         {
-
             // lobby changes its state to "Summarazing Results" 
             // lobby will be moved in state "Awaiting for players" only when users close the playing window
 
@@ -149,11 +148,27 @@ namespace Edison.Roshambo.Web.Hubs
         }
 
 
+        public async Task ActualizeConnection()
+        {
+            var context = HttpContext.Current.GetOwinContext().Get<RoshamboContext>();
+
+            var userName = Context.User.Identity.Name;
+            var conId = Context.ConnectionId;
+            await ActualizeConnectionInternal(userName, conId, context);
+
+            string joinedOpName;
+            string joinedLobbyName;
+
+
+
+            Clients.Caller.restoreClientData();
+        }
+
+
         public async Task<IEnumerable<UserProjection>> GetOnlineUsers()
         {
             var userName = Context.User.Identity.Name;
             var conId = Context.ConnectionId;
-            await ActualizeUserConnection(userName, conId);
             return await Task.FromResult(MvcApplication.OnlineUsers);
         }
 
@@ -183,12 +198,18 @@ namespace Edison.Roshambo.Web.Hubs
         }
 
 
-        private async Task ActualizeUserConnection(string userName, string connectionId)
+        private async Task ActualizeConnectionInternal(string userName, string connectionId, RoshamboContext context)
         {
-            var context = HttpContext.Current.GetOwinContext().Get<RoshamboContext>();
             var user = context.Users.Single(x => x.UserName.Equals(userName));
-            user.ConnectionId = connectionId;
-            await context.SaveChangesAsync();
+            user.ConnectionId = connectionId; 
+
+            // restore groups user participates in
+            if (user.OwnLobby != null)
+               await Groups.Add(connectionId, user.OwnLobby.LobbyName);
+
+            if (user.Competitor != null)
+                await Groups.Add(connectionId, user.Competitor.Lobby.LobbyName);
+                await context.SaveChangesAsync();
         }
 
 
@@ -200,7 +221,7 @@ namespace Edison.Roshambo.Web.Hubs
             try
             {
                 SetOpponentToLobby(context, lobbyName, userName);
-                await ActualizeUserConnection(userName, Context.ConnectionId);
+                // await ActualizeConnectionInternal(userName, Context.ConnectionId);
 
                 var lobbyId = SetLobbyState(context, LobbyStateNames.ReadyToStart, lobbyName);
 
@@ -219,7 +240,6 @@ namespace Edison.Roshambo.Web.Hubs
                     CurrentUserName = userName,
                     Message = HubResponseMessages.YouSuccessfullyJoinedLobby
                 };
-
 
                 Clients.Caller.lobbyJoined(data);
 
@@ -314,7 +334,7 @@ namespace Edison.Roshambo.Web.Hubs
                     }
                     else
                     {
-                        Clients.Client(lobby.LobbyOwner.ConnectionId).addLobbyMessage(new {Message = string.Format(HubResponseMessages.LobbyChallengerLeftLobby, userName)});
+                        Clients.Client(lobby.LobbyOwner.ConnectionId).opponentLeftLobby(new {OpponentName = userName});
                         Clients.Caller.userLeftLobby(new {lobby.LobbyId, lobby.LobbyName});
                     }
                     SetLobbyState(context, LobbyStateNames.AwaitingToPlayers, lobbyName);

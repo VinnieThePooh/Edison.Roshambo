@@ -8,7 +8,7 @@
         public const string LobbyJoined = "You successfully joined the lobby";
         public const string LobbyOwnerLeftTheGame = "Lobby owner {0} left the game. Lobby will be prevented from playing for one minute";
         public const string LobbyBlockingMessage = "Your lobby has been banned for {0} minutes due to leaving the game while playing";
-        public const string LobbyChallengerLeftLobby = "Player {0} left your lobby";
+        public const string OpponentLeftLobby = "Player * left your lobby";
         public const string LobbyChallengerLeftLobbyInCriticalTime = "Player {0} left your lobby. He got autolose and will be prevented from playing for one minute";
         public const string UserHaveBeenBlockedForAWhile = "You have been blocked for {0} minute(s) due to leaving lobby while playing";
         public const string UserHaveBeenUnblocked = "You have been unblocked and can continue playing Roshambo";

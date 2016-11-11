@@ -11,7 +11,7 @@
     <script type="text/javascript" src="~/signalr/hubs"></script>
     <script type="text/javascript" src="~/Scripts/clientmodel.js"></script>
     <script type="text/javascript">
-        $(function() {
+        $(function () {
 
             var resources = {
                 LobbyStatePlaying: '@LobbyStateNames.Playing',
@@ -26,7 +26,9 @@
                 GameGotAWinner: '@GameWorkflowMessages.GameGotAWinner',
                 TipUsingFailed: '@GameWorkflowMessages.TipUsingFailed',
                 OpponentLeftLobby: '@HubResponseMessages.OpponentLeftLobby',
-                YouSuccessfullyLeftLobby: '@HubResponseMessages.YouSuccessfullyLeftLobby'
+                YouSuccessfullyLeftLobby: '@HubResponseMessages.YouSuccessfullyLeftLobby',
+                YouSuccessfullyJoinedLobby: '@HubResponseMessages.YouSuccessfullyJoinedLobby',
+                UserJoinedYourLobby: '@HubResponseMessages.UserJoinedYourLobby'
             };
 
             window.Resources = resources;
@@ -45,7 +47,7 @@
             manager.blockingTime = getDate('@Model.BlockingTime');
             //console.log(manager.blockingTime);
             manager.currentGame.currentUserName = window.UserName;
-            
+
             initValidation("btnConfirmCreation", storage);
             initLobbyJoin("btnConfirmJoin");
             initHandlers();
@@ -54,31 +56,31 @@
             initBlocking();
             initImagesHandlers();
 
-            hub.start().done(function() {
+            hub.start().done(function () {
                 console.log("Hub: connection started");
 
                 gamesHub.server.actualizeConnection();
 
-                gamesHub.server.getOnlineUsers().done(function(users) {
-                        var table = $("#tableUsers");
-                        users.forEach(function(user) {
-                            addUserToTable(table, user);
-                        });
+                gamesHub.server.getOnlineUsers().done(function (users) {
+                    var table = $("#tableUsers");
+                    users.forEach(function (user) {
+                        addUserToTable(table, user);
+                    });
 
-                    })
-                    .fail(function(error) {
+                })
+                    .fail(function (error) {
                         var par = $("#messageUsers");
                         setTempMessage(par, "Could not load users list. Try to reload page later.");
                         console.log(error.stack);
                     });
 
-                window.gamesHub.server.getOnlineLobbies().done(function(lobbies) {
+                window.gamesHub.server.getOnlineLobbies().done(function (lobbies) {
                     var table = $("#tableLobbies");
-                    lobbies.forEach(function(lobbie) {
+                    lobbies.forEach(function (lobbie) {
                         addLobbyToTable(table, lobbie);
                     });
 
-                }).fail(function(error) {
+                }).fail(function (error) {
                     var par = $("#messageLobbies");
                     setTempMessage(par, "Could not load lobbies list. Try to reload page later.");
                     console.log(error.stack);

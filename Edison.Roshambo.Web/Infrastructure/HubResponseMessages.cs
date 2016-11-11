@@ -13,7 +13,7 @@
         public const string UserHaveBeenBlockedForAWhile = "You have been blocked for {0} minute(s) due to leaving lobby while playing";
         public const string UserHaveBeenUnblocked = "You have been unblocked and can continue playing Roshambo";
         public const string YouSuccessfullyJoinedLobby = "You successfully joined lobby";
-        public const string UserJoinedYourLobby = "{0} joined your lobby";
+        public const string UserJoinedYourLobby = "* joined your lobby";
         public const string YouSuccessfullyLeftLobby = "You successfully left lobby";
     }
 }

@@ -167,8 +167,6 @@ namespace Edison.Roshambo.Web.Hubs
 
         public async Task<IEnumerable<UserProjection>> GetOnlineUsers()
         {
-            var userName = Context.User.Identity.Name;
-            var conId = Context.ConnectionId;
             return await Task.FromResult(MvcApplication.OnlineUsers);
         }
 
@@ -237,8 +235,7 @@ namespace Edison.Roshambo.Web.Hubs
                     LobbyOwnerName = lobbyOwner.UserName,
                     OpponentName = lobbyOwner.UserName,
                     LobbyId = lobbyId,
-                    CurrentUserName = userName,
-                    Message = HubResponseMessages.YouSuccessfullyJoinedLobby
+                    CurrentUserName = userName                    
                 };
 
                 Clients.Caller.lobbyJoined(data);
@@ -246,7 +243,6 @@ namespace Edison.Roshambo.Web.Hubs
                 // notification for lobby owner
                 var dataToOwner = new
                 {
-                    Message = string.Format(HubResponseMessages.UserJoinedYourLobby, Context.User.Identity.Name),
                     LobbyId = lobbyId,
                     LobbyName = lobbyName,
                     OpponentName = userName,
@@ -272,7 +268,6 @@ namespace Edison.Roshambo.Web.Hubs
             }
         }
 
-        //todo: test it
         //todo: refactor it
         // remove lobby if called from lobby owner
         public async Task LeaveLobby(string lobbyName)
@@ -282,7 +277,15 @@ namespace Edison.Roshambo.Web.Hubs
                 var context = HttpContext.Current.GetOwinContext().Get<RoshamboContext>();
                 var userName = HttpContext.Current.User.Identity.Name;
                 var user = context.Users.First(u => u.UserName.Equals(userName));
-                var lobby = context.Lobbies.First(l => l.LobbyName.Equals(lobbyName));
+
+                var lobby = context.Lobbies.FirstOrDefault(l => l.LobbyName.Equals(lobbyName));
+
+                // sometimes gets "sequence contains no elements"
+                // это костыль
+                // todo: clarify this
+                if (lobby == null)
+                    return;
+
 
                 var opponent = lobby.Players.FirstOrDefault();
                 // leave lobby  button already was clicked
@@ -329,15 +332,19 @@ namespace Edison.Roshambo.Web.Hubs
                         {
                             SetLobbyState(context, LobbyStateNames.Blocked, opLobby.LobbyName);
                         }
+
+                        SetLobbyState(context, LobbyStateNames.AwaitingToPlayers, lobbyName);
                         // send message about locking
                         Clients.Client(user.ConnectionId).userHasBeenBlocked(new {Message = message});
                     }
                     else
                     {
+                        // lobby state must be changed before opponent left lobby due to client logic
+                        SetLobbyState(context, LobbyStateNames.AwaitingToPlayers, lobbyName);
                         Clients.Client(lobby.LobbyOwner.ConnectionId).opponentLeftLobby(new {OpponentName = userName});
                         Clients.Caller.userLeftLobby(new {lobby.LobbyId, lobby.LobbyName});
                     }
-                    SetLobbyState(context, LobbyStateNames.AwaitingToPlayers, lobbyName);
+//                    SetLobbyState(context, LobbyStateNames.AwaitingToPlayers, lobbyName);
                 }
                 // lobby owner leaves the game
                 else
@@ -471,6 +478,7 @@ namespace Edison.Roshambo.Web.Hubs
 
             if (game != null || lobby == null) return;
 
+            var oppId = lobby.Players.First().User.ConnectionId;
             var user = context.Users.FirstOrDefault(u => u.UserName.Equals(userName));
 
 
@@ -483,19 +491,17 @@ namespace Edison.Roshambo.Web.Hubs
                     IdLobby = lobby.LobbyId
                 };
                 var addedGame = context.Set<Game>().Add(game);
-                var oppConId = lobby.Players.First().User.ConnectionId;
                 await context.SaveChangesAsync();
                 
                 SetLobbyState(context, LobbyStateNames.Playing, lobby.LobbyName);
 
-                // adding owner to current group cause of membership resets after page reloading
-                await Groups.Add(Context.ConnectionId, lobby.LobbyName);
-
-                //todo: разобраться, почему приходиться  повторно добавлять connection в группу, раньше все работало
-                await Groups.Add(oppConId, lobby.LobbyName);
-                // передавать надо больше информации,+ gameStatus
                 var data = new {addedGame.GameId, LobbyOwnerName = userName, OpponentName = opponentName, lobby.LobbyName};
                 Clients.OthersInGroup(lobby.LobbyName).correctLobbyOwning();
+
+                // opponent losts his group membership somehow
+                // todo: clarify - why?
+                // so addding it again
+                await Groups.Add(oppId, lobby.LobbyName);
                 Clients.Group(lobby.LobbyName).gameStarted(data);
             }
             catch (Exception exc)
